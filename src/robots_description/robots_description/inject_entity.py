@@ -38,7 +38,7 @@ def inject(xml: str, initial_pose: Pose, name: str):
 
 
 if len(sys.argv) < 7:
-    print('usage: ros2 run tello_gazebo inject_entity.py -- foo.urdf initial_x initial_y initial_z initial_yaw name')
+    print('usage: ros2 run robots_description inject_entity.py -- foo.urdf initial_x initial_y initial_z initial_yaw name')
     sys.exit(1)
 
 f = open(sys.argv[1], 'r')

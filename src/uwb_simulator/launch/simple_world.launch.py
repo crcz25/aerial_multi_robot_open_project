@@ -10,14 +10,22 @@ import yaml
 
 
 def generate_launch_description():
-    ns = 'T01'
-
     world_path = os.path.join(
         get_package_share_directory('robots_description'),
         'worlds',
         'empty_world.world'
     )
-    # urdf_path = os.path.join(get_package_share_directory('tello_description'), 'urdf', 'tello_1.urdf')
+
+    ns = 'T01'
+    TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
+
+    model_folder = 'turtlebot3_' + TURTLEBOT3_MODEL
+    model_sdf_path = os.path.join(
+        get_package_share_directory('robots_description'),
+        'models',
+        model_folder,
+        'model.sdf'
+    )
 
     launch_description = LaunchDescription()
 
@@ -34,6 +42,22 @@ def generate_launch_description():
         output='screen'
     )
 
+    # Spaw  a turtlebot
+    spawn_turtlebot = Node(
+        package='robots_description',
+        executable='inject_entity.py',
+        output='screen',
+        arguments=[
+            model_sdf_path,
+            '0',
+            '0',
+            '0',
+            '0.001',
+            ns
+        ]
+    )
+
     launch_description.add_action(launch_gazebo_world)
+    launch_description.add_action(spawn_turtlebot)
 
     return launch_description
