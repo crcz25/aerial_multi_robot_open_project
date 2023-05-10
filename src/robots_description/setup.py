@@ -6,10 +6,18 @@ package_name = 'robots_description'
 
 models_data_files = []
 directories = glob('models/*')
+
 for directory in directories:
     files = glob(directory + '/*')
+    share_files = []
+    for file in files:
+        is_dir = os.path.isdir(file)
+        if is_dir:
+            directories.append(file)
+        else:
+            share_files.append(file)
     directory = os.path.join('share', package_name, directory)
-    models_data_files.append((directory, files))
+    models_data_files.append((directory, share_files))
 
 setup(
     name=package_name,
