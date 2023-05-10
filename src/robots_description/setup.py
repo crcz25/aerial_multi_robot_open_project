@@ -4,6 +4,7 @@ from glob import glob
 
 package_name = 'robots_description'
 
+# Add the models inside the models folder and subfolders to the share folder
 models_data_files = []
 directories = glob('models/*')
 
@@ -37,7 +38,11 @@ setup(
             os.path.join('lib', package_name),
             [package_name + '/inject_entity.py']
         ),
-        *models_data_files
+        *models_data_files,
+        (
+            os.path.join('share', package_name, 'urdf'),
+            glob('urdf/*.urdf')
+        )
     ],
     install_requires=['setuptools'],
     zip_safe=True,
