@@ -31,14 +31,19 @@ def inject(xml: str, initial_pose: Pose, name: str):
     if future.result() is not None:
         node.get_logger().info('response: %r' % future.result())
     else:
-        raise RuntimeError('exception while calling service: %r' % future.exception())
+        raise RuntimeError(
+            'exception while calling service: %r' % future.exception()
+        )
 
     node.destroy_node()
     rclpy.shutdown()
 
 
 if len(sys.argv) < 7:
-    print('usage: ros2 run robots_description inject_entity.py -- foo.urdf initial_x initial_y initial_z initial_yaw name')
+    print(
+        'usage: ros2 run robots_description inject_entity.py -- foo.urdf '
+        'initial_x initial_y initial_z initial_yaw name'
+    )
     sys.exit(1)
 
 f = open(sys.argv[1], 'r')
