@@ -1,0 +1,20 @@
+import yaml
+
+from typing import Dict, List, Union
+
+class ConfigLaunch:
+    def __init__(self, config_path: str) -> None:
+        self.path = config_path
+        self.config_dict = self.load_config_file(
+            config_path=self.path
+        )
+    
+    @staticmethod
+    def load_config_file(config_path: str) -> Dict:
+        with open(config_path, mode="rb") as file:
+            config_dict = yaml.safe_load(file)
+        return config_dict
+    
+    def get_robots_from_config(self) -> Union[List[str], None]:
+        robots_names = self.config_dict.get('robots', None)
+        return robots_names
