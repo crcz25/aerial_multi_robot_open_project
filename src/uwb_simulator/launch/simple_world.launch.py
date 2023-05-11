@@ -6,7 +6,9 @@ from launch_ros.actions import Node
 from launch.actions import ExecuteProcess
 
 import os
-import yaml
+from pathlib import Path
+
+from uwb_simulator.config_launcher import ConfigLaunch
 
 
 def generate_launch_description():
@@ -15,6 +17,15 @@ def generate_launch_description():
         'worlds',
         'empty_world.world'
     )
+
+    CONFIG_SIMULATOR_PATH = (
+        Path.cwd() / 'src' / 'uwb_simulator' / 'config' / 'simulation.yaml'
+    )
+
+    config_launch = ConfigLaunch(
+        config_path=str(CONFIG_SIMULATOR_PATH)
+    )
+    print(config_launch.get_robots_from_config())
 
     ns = 'T01'
     TURTLEBOT3_MODEL = os.environ['TURTLEBOT3_MODEL']
@@ -65,7 +76,7 @@ def generate_launch_description():
         ],
     )
 
-    # Spawn a turtlebot
+    # Spawn a tello drone
     spawn_tello = Node(
         package='robots_description',
         executable='inject_entity.py',
