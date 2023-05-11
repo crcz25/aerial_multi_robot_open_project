@@ -96,8 +96,8 @@ class AntennaTfBroadcaster(Node):
             t.header.frame_id = parent_frame_id
             t.child_frame_id = f"{antenna_frame_id}_{i}"
             # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
-            t.transform.translation.x = 0.5*np.cos(directions[i])
-            t.transform.translation.y = 0.5*np.sin(directions[i])
+            t.transform.translation.x = 0.5*np.cos(directions[i]) + pose.position.x
+            t.transform.translation.y = 0.5*np.sin(directions[i]) + pose.position.y
             t.transform.translation.z = pose.position.z
             # Set the rotation values
             t.transform.rotation.x = orientation.x
