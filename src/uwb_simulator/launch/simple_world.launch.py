@@ -79,7 +79,8 @@ def generate_launch_description():
                 package='robot_state_publisher',
                 executable='robot_state_publisher',
                 output='screen',
-                arguments=[tello_urdf_path]
+                arguments=[tello_urdf_path],
+                namespace=robot_ns
             )
             # Joystick driver, generates /namespace/joy messages
             tello_joy = Node(
