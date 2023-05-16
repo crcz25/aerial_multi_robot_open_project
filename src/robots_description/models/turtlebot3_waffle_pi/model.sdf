@@ -477,6 +477,9 @@
 
       <ros>
         <!-- <namespace>/tb3</namespace> -->
+        <!--since gazebo_plugins publish tf topic in global namespace /tf only and it
+        cannot be remapped like (namespace/tf) through launch arguments -->
+        <remapping>/tf:=tf</remapping>
       </ros>
 
       <update_rate>30</update_rate>
