@@ -8,5 +8,6 @@ To launch a simple world (from inside the main folder):
 3. (To export the Turtlebot models- maybe this could be inside a sh file?) 
         
         export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(pwd)/install/robots_description/share/robots_description/models
-4.      ros2 launch uwb_simulator simple_world.launch.py
+4.      export TURTLEBOT3_MODEL=waffle_pi
+5.      ros2 launch uwb_simulator simple_world.launch.py
 
