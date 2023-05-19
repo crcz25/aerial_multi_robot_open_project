@@ -74,6 +74,10 @@ def generate_launch_description():
 
     # Spawn the robots
     robots_in_config = config_launch.get_robots_from_config()
+    uwb_nodes_in_config = config_launch.get_uwb_nodes_from_config()
+    print("YAML FILE")
+    print(uwb_nodes_in_config)
+
     for num, robot in enumerate(robots_in_config):
         print(num, robot)
         if "tello" in robot.lower():
@@ -154,8 +158,21 @@ def generate_launch_description():
                     '-timeout', '120.0'
                 ]
             )
-
+            # Add transforms between the robot and the antennas
+            tbot_transforms = Node(
+                package='uwb_simulator',
+                executable='antenna_tf_broadcaster',
+                output='screen',
+                emulate_tty=True,
+                arguments=[
+                    str(robot), # robot_name
+                    str(uwb_nodes_in_config[robot]['num_antennas']), # num_antennas
+                    uwb_nodes_in_config[robot]['names'], # names_antennas
+                ]
+            )
+            
             launch_description.add_action(tbot_state_pub)
             launch_description.add_action(tbot_start_gazebo_ros_spawner_cmd)
+            launch_description.add_action(tbot_transforms)
 
     return launch_description

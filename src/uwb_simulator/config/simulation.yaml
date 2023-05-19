@@ -2,3 +2,19 @@ robots: [
   "T01",
   "T02",
 ]
+
+uwb_nodes:
+  T01:
+    num_antennas: 4
+    names: [
+      "A",
+      "B",
+      "C",
+      "D",
+    ]
+  T02:
+    num_antennas: 2
+    names: [
+      "A",
+      "B",
+    ]
