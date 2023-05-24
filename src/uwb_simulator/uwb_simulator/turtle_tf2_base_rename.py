@@ -68,6 +68,7 @@ class TfBroadcaster(Node):
         # Read message content and assign it to
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = f"odom"
+        t.header.frame_id = f"world"
         t.child_frame_id = f"base_footprint_{self.robot_name}"
         # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
         t.transform.translation.x = pose.position.x
