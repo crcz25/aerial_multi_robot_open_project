@@ -75,6 +75,7 @@ def generate_launch_description():
     # Spawn the robots
     robots_in_config = config_launch.get_robots_from_config()
     uwb_nodes_in_config = config_launch.get_uwb_nodes_from_config()
+    uwb_ranges_in_config = config_launch.get_uwb_ranges_from_config()
     print("YAML FILE")
     print(uwb_nodes_in_config)
 
@@ -143,7 +144,7 @@ def generate_launch_description():
                         'use_sim_time': True,
                     },
                 ],
-                remappings=remappings
+                # remappings=remappings
             )
             # Spawn a turtlebot
             tbot_start_gazebo_ros_spawner_cmd = Node(
@@ -158,10 +159,20 @@ def generate_launch_description():
                     '-timeout', '120.0'
                 ]
             )
+            # Rename the base_footprint frame
+            tbot_base_rename = Node(
+                package='uwb_simulator',
+                executable='turtle_tf2_base_rename',
+                output='screen',
+                emulate_tty=True,
+                arguments=[
+                    str(robot), # robot_name
+                ]
+            )
             # Add transforms between the robot and the antennas
             tbot_transforms = Node(
                 package='uwb_simulator',
-                executable='antenna_tf_broadcaster',
+                executable='turtle_tf2_broadcaster',
                 output='screen',
                 emulate_tty=True,
                 arguments=[
@@ -170,9 +181,26 @@ def generate_launch_description():
                     uwb_nodes_in_config[robot]['names'], # names_antennas
                 ]
             )
-            
             launch_description.add_action(tbot_state_pub)
             launch_description.add_action(tbot_start_gazebo_ros_spawner_cmd)
+            launch_description.add_action(tbot_base_rename)
             launch_description.add_action(tbot_transforms)
+
+        # Add listener to the transforms
+        tbot_listener = Node(
+            package='uwb_simulator',
+            executable='turtle_tf2_listener',
+            output='screen',
+            emulate_tty=True,
+            arguments=[
+                str(uwb_ranges_in_config['ground_truth']), # robot_name of the ground truth
+                str(uwb_nodes_in_config), # nodes config
+                str(uwb_ranges_in_config['max_twr_freq']), # max_twr_freq
+                str(uwb_ranges_in_config['duty_cycle']), # duty_cycle
+                uwb_ranges_in_config['ranges'], # ranges
+                
+            ]
+        )
+        # launch_description.add_action(tbot_listener)
 
     return launch_description

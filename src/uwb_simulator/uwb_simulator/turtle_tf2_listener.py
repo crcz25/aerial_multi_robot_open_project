@@ -75,6 +75,7 @@ class FrameListener(Node):
         # Call on_timer function
         # TODO verify if we have to use the variable max_freq or duty_cycle
         self.timer = self.create_timer(1.0/self.max_freq, self.on_timer)
+        # TODO: Add the subscription to the ranges topic
 
     def on_timer(self):
         # Iterate over the ranges to calculate the transforms
@@ -105,8 +106,11 @@ class FrameListener(Node):
                                 to_frame_rel,
                                 from_frame_rel,
                                 rclpy.time.Time())
+                            
+                            # TODO: Measure the distance between the antennas
                             print(f'to_frame_rel: {to_frame_rel} -> from_frame_rel: {from_frame_rel}')
                             print(f't: {t}')
+                            print(f'transform: {t.transform}')
                             print()
                         except TransformException as ex:
                             self.get_logger().info(
