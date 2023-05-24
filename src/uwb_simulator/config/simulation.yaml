@@ -24,7 +24,5 @@ uwb_ranges:
   max_twr_freq: 400
   duty_cycle: 1
   ranges: [
-    "T01_T02+",
-    # "T02_T01+",
-    # "T01_T01",
+    "T02"
   ]

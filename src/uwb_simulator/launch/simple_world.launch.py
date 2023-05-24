@@ -186,21 +186,21 @@ def generate_launch_description():
             launch_description.add_action(tbot_base_rename)
             launch_description.add_action(tbot_transforms)
 
-        # Add listener to the transforms
-        tbot_listener = Node(
-            package='uwb_simulator',
-            executable='turtle_tf2_listener',
-            output='screen',
-            emulate_tty=True,
-            arguments=[
-                str(uwb_ranges_in_config['ground_truth']), # robot_name of the ground truth
-                str(uwb_nodes_in_config), # nodes config
-                str(uwb_ranges_in_config['max_twr_freq']), # max_twr_freq
-                str(uwb_ranges_in_config['duty_cycle']), # duty_cycle
-                uwb_ranges_in_config['ranges'], # ranges
-                
-            ]
-        )
-        # launch_description.add_action(tbot_listener)
+    # Add listener to the transforms
+    tbot_listener = Node(
+        package='uwb_simulator',
+        executable='turtle_tf2_listener',
+        output='screen',
+        emulate_tty=True,
+        arguments=[
+            str(uwb_ranges_in_config['ground_truth']), # robot_name of the ground truth
+            str(uwb_nodes_in_config), # nodes config
+            str(uwb_ranges_in_config['max_twr_freq']), # max_twr_freq
+            str(uwb_ranges_in_config['duty_cycle']), # duty_cycle
+            uwb_ranges_in_config['ranges'], # ranges
+            
+        ]
+    )
+    launch_description.add_action(tbot_listener)
 
     return launch_description
