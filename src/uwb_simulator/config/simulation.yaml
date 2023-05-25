@@ -1,6 +1,8 @@
 robots: [
   "T01",
   "T02",
+  "tello1",
+  "tello2",
 ]
 
 uwb_nodes:
