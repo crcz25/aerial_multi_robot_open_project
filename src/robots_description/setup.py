@@ -42,7 +42,11 @@ setup(
         (
             os.path.join('share', package_name, 'urdf'),
             glob('urdf/*.urdf')
-        )
+        ),
+        (
+            os.path.join('share', package_name, 'urdf'),
+            glob('urdf/*.xacro')
+        ),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
