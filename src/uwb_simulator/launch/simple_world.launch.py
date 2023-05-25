@@ -142,6 +142,7 @@ def generate_launch_description():
                     {
                         'robot_description': tbot_robot_desc,
                         'use_sim_time': True,
+                        'frame_prefix': f'{robot_ns}_'
                     },
                 ],
                 # remappings=remappings
