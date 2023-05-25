@@ -1,0 +1,35 @@
+digraph G {
+"odom" -> "base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 59.574\nBuffer length: 2.115\nMost recent transform: 7.031\nOldest transform: 4.916\n"];
+"T02_base_footprint" -> "T02_base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"world" -> "T02_base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 12.568\nBuffer length: 5.013\nMost recent transform: 1685017080.121409\nOldest transform: 1685017075.10866\n"];
+"T02_base_link" -> "T02_camera_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_camera_link" -> "T02_camera_rgb_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_camera_rgb_frame" -> "T02_camera_rgb_optical_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_base_link" -> "T02_caster_back_left_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_base_link" -> "T02_caster_back_right_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_base_link" -> "T02_imu_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_base_link" -> "T02_base_scan"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_base_footprint" -> "T02/tf/A"[label=" Broadcaster: default_authority\nAverage rate: 12.494\nBuffer length: 5.123\nMost recent transform: 1685017080.234386\nOldest transform: 1685017075.11175\n"];
+"T01_base_footprint" -> "T01_base_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"world" -> "T01_base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 12.597\nBuffer length: 5.001\nMost recent transform: 1685017080.138525\nOldest transform: 1685017075.137297\n"];
+"T01_base_link" -> "T01_camera_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T01_camera_link" -> "T01_camera_rgb_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T01_camera_rgb_frame" -> "T01_camera_rgb_optical_frame"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T01_base_link" -> "T01_caster_back_left_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T01_base_link" -> "T01_caster_back_right_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T01_base_link" -> "T01_imu_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T01_base_link" -> "T01_base_scan"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"T02_base_footprint" -> "T02/tf/B"[label=" Broadcaster: default_authority\nAverage rate: 12.491\nBuffer length: 5.124\nMost recent transform: 1685017080.23634\nOldest transform: 1685017075.112802\n"];
+"T01_base_footprint" -> "T01/tf/A"[label=" Broadcaster: default_authority\nAverage rate: 12.597\nBuffer length: 5.001\nMost recent transform: 1685017080.138793\nOldest transform: 1685017075.137609\n"];
+"T01_base_footprint" -> "T01/tf/B"[label=" Broadcaster: default_authority\nAverage rate: 12.597\nBuffer length: 5.001\nMost recent transform: 1685017080.139636\nOldest transform: 1685017075.138358\n"];
+"T01_base_footprint" -> "T01/tf/C"[label=" Broadcaster: default_authority\nAverage rate: 12.596\nBuffer length: 5.001\nMost recent transform: 1685017080.140747\nOldest transform: 1685017075.139285\n"];
+"T01_base_footprint" -> "T01/tf/D"[label=" Broadcaster: default_authority\nAverage rate: 12.597\nBuffer length: 5.001\nMost recent transform: 1685017080.141824\nOldest transform: 1685017075.140538\n"];
+"T01_base_link" -> "T01_wheel_left_link"[label=" Broadcaster: default_authority\nAverage rate: 16.393\nBuffer length: 2.074\nMost recent transform: 6.997\nOldest transform: 4.923\n"];
+"T01_base_link" -> "T01_wheel_right_link"[label=" Broadcaster: default_authority\nAverage rate: 16.393\nBuffer length: 2.074\nMost recent transform: 6.997\nOldest transform: 4.923\n"];
+"T02_base_link" -> "T02_wheel_left_link"[label=" Broadcaster: default_authority\nAverage rate: 15.686\nBuffer length: 2.04\nMost recent transform: 6.99\nOldest transform: 4.95\n"];
+"T02_base_link" -> "T02_wheel_right_link"[label=" Broadcaster: default_authority\nAverage rate: 15.686\nBuffer length: 2.04\nMost recent transform: 6.99\nOldest transform: 4.95\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1685017080.400935"[ shape=plaintext ] ;
+}->"world";
+}
