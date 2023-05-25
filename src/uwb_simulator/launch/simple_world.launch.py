@@ -4,6 +4,8 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import ExecuteProcess
+from launch.substitutions import Command
+from launch_ros.parameter_descriptions import ParameterValue
 
 import os
 from pathlib import Path
@@ -61,7 +63,14 @@ def generate_launch_description():
         'urdf',
         'tello.urdf'
     )
-    with open(tello_urdf_path, 'r') as tello_robot_file:
+    tello_xacro_path = os.path.join(
+        get_package_share_directory('robots_description'),
+        'urdf',
+        'tello.urdf.xacro'
+    )
+    # with open(tello_urdf_path, 'r') as tello_robot_file:
+    #     tello_robot_desc = tello_robot_file.read()
+    with open(tello_xacro_path, 'r') as tello_robot_file:
         tello_robot_desc = tello_robot_file.read()
 
     # Load the robots configuration
@@ -88,11 +97,22 @@ def generate_launch_description():
                 package='robot_state_publisher',
                 executable='robot_state_publisher',
                 name='robot_state_publisher',
-                # namespace=robot_ns,
+                namespace=robot_ns,
                 output='screen',
                 parameters=[
                     {
-                        'robot_description': tello_robot_desc,
+                        # 'robot_description': tello_robot_desc,
+                        'robot_description': ParameterValue(
+                                                Command(
+                                                [
+                                                    'xacro ',
+                                                    tello_xacro_path,
+                                                    ' robot_name:=',
+                                                    robot_ns
+                                                ]
+                                                ),
+                                                value_type=str
+                                            ),
                         'use_sim_time': True,
                     },
                 ],
@@ -105,9 +125,9 @@ def generate_launch_description():
                 output='screen',
                 arguments=[
                     '-entity', robot_ns,
-                    '-file', tello_urdf_path,
                     '-robot_namespace', robot_ns,
                     '-x', str(num + 2), '-y', str(num + 2),
+                    '-topic', f'{robot_ns}/robot_description',
                     '-timeout', '120.0'
                 ]
             )
@@ -129,6 +149,18 @@ def generate_launch_description():
             launch_description.add_action(tello_joy)
             launch_description.add_action(tello_controller)
             launch_description.add_action(tello_start_gazebo_ros_spawner_cmd)
+
+            # Rename the base_footprint frame
+            drone_base_rename = Node(
+                package='uwb_simulator',
+                executable='drone_tf2_base_rename',
+                output='screen',
+                emulate_tty=True,
+                arguments=[
+                    str(robot), # robot_name
+                ]
+            )
+            launch_description.add_action(drone_base_rename)
         else:
             robot_ns = robot
             # Publish static transforms
@@ -185,7 +217,7 @@ def generate_launch_description():
             launch_description.add_action(tbot_state_pub)
             launch_description.add_action(tbot_start_gazebo_ros_spawner_cmd)
             launch_description.add_action(tbot_base_rename)
-            launch_description.add_action(tbot_transforms)
+            # launch_description.add_action(tbot_transforms)
 
     # Add listener to the transforms
     tbot_listener = Node(
@@ -202,6 +234,6 @@ def generate_launch_description():
             
         ]
     )
-    launch_description.add_action(tbot_listener)
+    # launch_description.add_action(tbot_listener)
 
     return launch_description
