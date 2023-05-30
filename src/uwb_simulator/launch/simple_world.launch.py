@@ -160,7 +160,21 @@ def generate_launch_description():
                     str(robot), # robot_name
                 ]
             )
+            # Add transforms between the robot and the antennas
+            drone_transforms = Node(
+                package='uwb_simulator',
+                executable='drone_tf2_broadcaster',
+                output='screen',
+                emulate_tty=True,
+                arguments=[
+                    str(robot), # robot_name
+                    str(uwb_nodes_in_config[robot]['num_antennas']), # num_antennas
+                    uwb_nodes_in_config[robot]['names'], # names_antennas
+                ]
+            )
+
             launch_description.add_action(drone_base_rename)
+            launch_description.add_action(drone_transforms)
         else:
             robot_ns = robot
             # Publish static transforms
@@ -217,7 +231,7 @@ def generate_launch_description():
             launch_description.add_action(tbot_state_pub)
             launch_description.add_action(tbot_start_gazebo_ros_spawner_cmd)
             launch_description.add_action(tbot_base_rename)
-            # launch_description.add_action(tbot_transforms)
+            launch_description.add_action(tbot_transforms)
 
     # Add listener to the transforms
     tbot_listener = Node(

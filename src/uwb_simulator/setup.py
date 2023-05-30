@@ -27,6 +27,7 @@ setup(
             'turtle_tf2_listener = uwb_simulator.turtle_tf2_listener:main',
             'turtle_tf2_base_rename = uwb_simulator.turtle_tf2_base_rename:main',
             'drone_tf2_base_rename = uwb_simulator.drone_tf2_base_rename:main',
+            'drone_tf2_broadcaster = uwb_simulator.drone_tf2_broadcaster:main',
         ],
     },
 )

@@ -20,6 +20,18 @@ uwb_nodes:
       "A",
       "B",
     ]
+  tello1:
+    num_antennas: 2
+    names: [
+      "A",
+      "B",
+    ]
+  tello2:
+    num_antennas: 2
+    names: [
+      "A",
+      "B",
+    ]
 
 uwb_ranges:
   ground_truth: "T01"
