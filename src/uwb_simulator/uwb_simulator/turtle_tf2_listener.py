@@ -11,7 +11,7 @@ import ast
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
-
+from std_msgs.msg import Float32
 
 # This function is a stripped down version of the code in
 # https://github.com/matthew-brett/transforms3d/blob/f185e866ecccb66c545559bc9f2e19cb5025e0ab/transforms3d/euler.py
@@ -76,6 +76,9 @@ class FrameListener(Node):
         self.measurements = []
         self.generate_antennas_names()
 
+        # Generate dictionary of publishers
+        self.publishers_ = self.generate_publishers_names()
+
         # Declare and acquire target frame
         self.target_frame = f'/{self.ground_truth}/tf/base_footprint'
         # Call on_timer function
@@ -83,6 +86,12 @@ class FrameListener(Node):
         self.timer = self.create_timer(1.0/self.max_freq, self.on_timer)
         self.i = 0
         # TODO: Add the subscription to the ranges topic
+
+    def generate_publishers_names(self):
+        publishers = {}
+        for origin, end in self.measurements:
+            publishers[f'from_{origin}_to_{end}'] = (self.create_publisher(Float32, f'from_{origin}_to_{end}', 10), Float32())
+        return publishers
 
     def generate_antennas_names(self):
         origin_config = self.nodes_config[self.ground_truth]
@@ -126,6 +135,12 @@ class FrameListener(Node):
             norm = np.linalg.norm([t_x, t_y, t_z])
             # Add noise to the norm
             norm += np.random.normal(0, 10)
+            # Publish the norm
+            publisher_ = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][0]
+            msg = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][1]
+            msg.data = norm
+            publisher_.publish(msg)
+            # Print the information
             print(f'to_frame_rel: {to_frame_rel} -> from_frame_rel: {from_frame_rel}')
             print(f't: {t}')
             print(f'transform: {t.transform}')
