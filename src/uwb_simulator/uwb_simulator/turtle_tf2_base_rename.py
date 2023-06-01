@@ -58,7 +58,7 @@ class TfBroadcaster(Node):
                                                      qos_profile=qos_policy)
         self.odom_msg = nav_msgs.msg.Odometry()
 
-    def rename_base_footprint(self):
+    def rename_base_link(self):
         # Get the turtle pose
         pose = self.odom_msg.pose.pose
         # Get the turtle orientation
@@ -69,7 +69,7 @@ class TfBroadcaster(Node):
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = f"odom"
         t.header.frame_id = f"world"
-        t.child_frame_id = f"{self.robot_name}_base_footprint"
+        t.child_frame_id = f"{self.robot_name}_base_link"
         # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
         t.transform.translation.x = pose.position.x
         t.transform.translation.y = pose.position.y
@@ -87,7 +87,7 @@ class TfBroadcaster(Node):
     def handle_turtle_pose(self, msg):
         #print("handle_turtle_pose")
         self.odom_msg = msg
-        self.rename_base_footprint()
+        self.rename_base_link()
 
 def main(args=None):
     rclpy.init(args=args)

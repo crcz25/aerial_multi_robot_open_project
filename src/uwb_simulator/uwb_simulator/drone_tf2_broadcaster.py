@@ -93,7 +93,7 @@ class AntennaTfBroadcaster(Node):
             t = self.transformations[i]
             # Read message content and assign it to
             t.header.stamp = self.get_clock().now().to_msg()
-            t.header.frame_id = f"{self.robot_name}_base_footprint"
+            t.header.frame_id = f"{self.robot_name}_base_link"
             t.child_frame_id = f"{self.robot_name}/tf/{self.names_antennas[i]}"
             # Drone exists in 3D, thus we get x and y translation based on the direction of the antenna
             t.transform.translation.x = 0.5*np.cos(directions[i])# + pose.position.x

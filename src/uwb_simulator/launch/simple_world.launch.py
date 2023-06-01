@@ -85,8 +85,10 @@ def generate_launch_description():
     robots_in_config = config_launch.get_robots_from_config()
     uwb_nodes_in_config = config_launch.get_uwb_nodes_from_config()
     uwb_ranges_in_config = config_launch.get_uwb_ranges_from_config()
-    print("YAML FILE")
-    print(uwb_nodes_in_config)
+    # print("YAML FILE")
+    # print(uwb_nodes_in_config)
+    # print(ground_config)
+
 
     for num, robot in enumerate(robots_in_config):
         print(num, robot)
@@ -150,7 +152,7 @@ def generate_launch_description():
             launch_description.add_action(tello_controller)
             launch_description.add_action(tello_start_gazebo_ros_spawner_cmd)
 
-            # Rename the base_footprint frame
+            # Rename the base_link frame
             drone_base_rename = Node(
                 package='uwb_simulator',
                 executable='drone_tf2_base_rename',
@@ -206,7 +208,7 @@ def generate_launch_description():
                     '-timeout', '120.0'
                 ]
             )
-            # Rename the base_footprint frame
+            # Rename the base_link frame
             tbot_base_rename = Node(
                 package='uwb_simulator',
                 executable='turtle_tf2_base_rename',
@@ -234,9 +236,9 @@ def generate_launch_description():
             launch_description.add_action(tbot_transforms)
 
     # Add listener to the transforms
-    tbot_listener = Node(
+    listener = Node(
         package='uwb_simulator',
-        executable='turtle_tf2_listener',
+        executable='tf2_listener',
         output='screen',
         emulate_tty=True,
         arguments=[
@@ -248,6 +250,6 @@ def generate_launch_description():
             
         ]
     )
-    # launch_description.add_action(tbot_listener)
+    launch_description.add_action(listener)
 
     return launch_description

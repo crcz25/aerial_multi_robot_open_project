@@ -62,7 +62,7 @@ class TfBroadcaster(Node):
         )
         self.odom_msg = nav_msgs.msg.Odometry()
 
-    def rename_base_footprint(self):
+    def rename_base_link(self):
         # Get the drone pose
         pose = self.odom_msg.pose.pose
         # Get the drone orientation
@@ -73,7 +73,7 @@ class TfBroadcaster(Node):
         t.header.stamp = self.get_clock().now().to_msg()
         t.header.frame_id = f"odom"
         t.header.frame_id = f"world"
-        t.child_frame_id = f"{self.robot_name}_base_footprint"
+        t.child_frame_id = f"{self.robot_name}_base_link"
         # Drone only exists in 2D, thus we get x and y translation based
         # on the direction of the antenna
         t.transform.translation.x = pose.position.x
@@ -91,7 +91,7 @@ class TfBroadcaster(Node):
 
     def handle_turtle_pose(self, msg):
         self.odom_msg = msg
-        self.rename_base_footprint()
+        self.rename_base_link()
 
 def main(args=None):
     rclpy.init(args=args)

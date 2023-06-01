@@ -38,5 +38,5 @@ uwb_ranges:
   max_twr_freq: 400
   duty_cycle: 1
   ranges: [
-    "T02"
+    "T02_tello1_tello2",
   ]

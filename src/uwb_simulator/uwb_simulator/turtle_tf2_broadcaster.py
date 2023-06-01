@@ -38,7 +38,7 @@ def quaternion_from_euler(ai, aj, ak):
 class AntennaTfBroadcaster(Node):
 
     def __init__(self):
-        super().__init__(f'antenna_tf_broadcaster_{randint(0, 1000)}')
+        super().__init__(f'turtle_tf_broadcaster_{randint(0, 1000)}')
         qos_policy = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
                                           history=rclpy.qos.HistoryPolicy.KEEP_LAST,
                                           depth=1)
@@ -83,7 +83,7 @@ class AntennaTfBroadcaster(Node):
             t = self.transformations[i]
             # Read message content and assign it to
             t.header.stamp = self.get_clock().now().to_msg()
-            t.header.frame_id = f"{self.robot_name}_base_footprint"
+            t.header.frame_id = f"{self.robot_name}_base_link"
             t.child_frame_id = f"{self.robot_name}/tf/{self.names_antennas[i]}"
             # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
             t.transform.translation.x = 0.5*np.cos(directions[i])# + pose.position.x
