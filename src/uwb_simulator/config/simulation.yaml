@@ -1,0 +1,38 @@
+robots: [
+  "T01",
+  "T02",
+  "tello1",
+  "tello2",
+]
+
+uwb_nodes:
+  T01:
+    num_antennas: 1
+    names: [
+      "A",
+    ]
+  T02:
+    num_antennas: 1
+    names: [
+      "A",
+    ]
+  tello1:
+    num_antennas: 1
+    names: [
+      "A",
+    ]
+  tello2:
+    num_antennas: 1
+    names: [
+      "A",
+    ]
+
+uwb_ranges:
+  ground_truth: "T01"
+  max_twr_freq: 400
+  duty_cycle: 1
+  mean: 0
+  std_dev: 0.1
+  ranges: [
+    "T02_tello1_tello2",
+  ]

@@ -1,0 +1,38 @@
+mkdir -p ros2_ws/src
+cd ros2_ws/src
+ros2 pkg create --build-type ament_python learning_tf2_py
+cd learning_tf2_py/learning_tf2_py
+rosdep install -i --from-path src --rosdistro galactic -y
+
+
+ros2 launch gazebo_ros gazebo.launch.py
+
+ros2 run rviz2 rviz2
+
+ros2 run tf2_tools view_frames
+python3 turtle_tf2_broadcaster.py
+
+
+ros2 launch gazebo_ros gazebo.launch.py
+
+ros2 launch tello_gazebo simple_launch.py
+
+ros2 run rviz2 rviz2
+
+ros2 topic echo /tf
+
+
+
+# Test UWB Sensors
+colcon build --packages-select uwb_simulator
+
+source install/setup.bash
+export ROS_DOMAIN_ID=37
+export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$(pwd)/install/robots_description/share/robots_description/models
+export TURTLEBOT3_MODEL=waffle_pi
+
+ros2 launch uwb_simulator simple_world.launch.py
+python3 turtle_tf2_listener.py
+ros2 run rqt_graph rqt_graph
+ros2 run rviz2 rviz2
+ros2 run tf2_tools view_frames
