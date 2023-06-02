@@ -91,7 +91,7 @@ def generate_launch_description():
 
 
     for num, robot in enumerate(robots_in_config):
-        print(num, robot)
+        # print(num, robot)
         if "tello" in robot.lower():
             robot_ns = robot
             # Publish static transforms
@@ -246,6 +246,8 @@ def generate_launch_description():
             str(uwb_nodes_in_config), # nodes config
             str(uwb_ranges_in_config['max_twr_freq']), # max_twr_freq
             str(uwb_ranges_in_config['duty_cycle']), # duty_cycle
+            str(uwb_ranges_in_config['mean']), # mean
+            str(uwb_ranges_in_config['std_dev']), # std_dev
             uwb_ranges_in_config['ranges'], # ranges
             
         ]

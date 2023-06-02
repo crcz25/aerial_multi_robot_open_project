@@ -56,7 +56,9 @@ class FrameListener(Node):
             self.nodes_config = ast.literal_eval(sys.argv[2])
             self.max_freq = float(sys.argv[3])
             self.duty_cycle = float(sys.argv[4])
-            self.pairs = sys.argv[5].split('_')
+            self.mean_noise = float(sys.argv[5])
+            self.std_dev_noise = float(sys.argv[6])
+            self.pairs = sys.argv[7].split('_')
             self.get_logger().info(f"robot_name: {self.ground_truth}")
             self.get_logger().info(f"nodes_config: {self.nodes_config}")
             self.get_logger().info(f"max_freq: {self.max_freq}")
@@ -68,6 +70,8 @@ class FrameListener(Node):
                 'A', 'B']}, 'tello1': {'num_antennas': 2, 'names': ['A', 'B']}, 'tello2': {'num_antennas': 2, 'names': ['A', 'B']}}
             self.max_freq = 400.0
             self.duty_cycle = 1.0
+            self.mean_noise = 0.0
+            self.std_dev_noise = 0.1
             self.pairs = "T02_tello1_tello2".split('_')
             self.get_logger().info("No arguments received")
 
@@ -82,6 +86,7 @@ class FrameListener(Node):
 
         # Generate dictionary of publishers
         self.publishers_ = self.generate_publishers_names()
+        # self.tf_publisher_ = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}/tf/antenna', 10)
 
         # Declare and acquire target frame
         self.target_frame = f'/{self.ground_truth}/tf/base_link'
@@ -94,8 +99,7 @@ class FrameListener(Node):
     def generate_publishers_names(self):
         publishers = {}
         for origin, end in self.measurements:
-            publishers[f'from_{origin}_to_{end}'] = (self.create_publisher(
-                Float32, f'from_{origin}_to_{end}', 10), Float32())
+            publishers[f'from_{origin}_to_{end}'] = (self.create_publisher(Float32, f'from_{origin}_to_{end}', 10), Float32())
         return publishers
 
     def generate_antennas_names(self):
@@ -140,10 +144,12 @@ class FrameListener(Node):
             t_x = t.transform.translation.x
             t_y = t.transform.translation.y
             t_z = t.transform.translation.z
+            # Publish the transform
+            # self.tf_publisher_.publish(t)
             # Calculate the norm of the vector
             norm = np.linalg.norm([t_x, t_y, t_z])
             # Add noise to the norm
-            norm += np.random.normal(0, 10)
+            norm += np.random.normal(self.mean_noise, self.std_dev_noise)
             # Publish the norm
             publisher_ = self.publishers_[
                 f'from_{to_frame_rel}_to_{from_frame_rel}'][0]
@@ -152,19 +158,19 @@ class FrameListener(Node):
             msg.data = norm
             publisher_.publish(msg)
             # Print the information
-            print(
-                f'to_frame_rel: {to_frame_rel} -> from_frame_rel: {from_frame_rel}')
-            print(f't: {t}')
-            print(f'transform: {t.transform}')
-            print(f'norm: {norm}')
-            print()
+            # print(
+            #     f'to_frame_rel: {to_frame_rel} -> from_frame_rel: {from_frame_rel}')
+            # print(f't: {t}')
+            # print(f'transform: {t.transform}')
+            # print(f'norm: {norm}')
+            # print()
         except TransformException as ex:
             self.get_logger().info(
                 f'Could not transform {to_frame_rel} to {from_frame_rel}: {ex}')
             return
 
             # print(f'origin: {origin}, end: {end}')
-        pass
+        return
 
 
 def main(args=None):
