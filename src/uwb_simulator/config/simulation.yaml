@@ -5,16 +5,38 @@ robots: [
   "tello2",
 ]
 
+# uwb_nodes:
+#   T01:
+#     num_antennas: 1
+#     names: [
+#       "A",
+#     ]
+#   T02:
+#     num_antennas: 1
+#     names: [
+#       "A",
+#     ]
+#   tello1:
+#     num_antennas: 1
+#     names: [
+#       "A",
+#     ]
+#   tello2:
+#     num_antennas: 1
+#     names: [
+#       "A",
+#     ]
+
 uwb_nodes:
   T01:
-    num_antennas: 1
+    num_antennas: 2
     names: [
-      "A",
+      "A", "B",
     ]
   T02:
-    num_antennas: 1
+    num_antennas: 2
     names: [
-      "A",
+      "A", "B",
     ]
   tello1:
     num_antennas: 1
@@ -28,11 +50,12 @@ uwb_nodes:
     ]
 
 uwb_ranges:
+  # ground truth could be all to measure the distance between all the robots antennas or the robot that is supposed to be the ground truth
   ground_truth: "T01"
   max_twr_freq: 400
   duty_cycle: 1
   mean: 0
-  std_dev: 0.1
+  std_dev: 0.2
   ranges: [
     "T02_tello1_tello2",
   ]

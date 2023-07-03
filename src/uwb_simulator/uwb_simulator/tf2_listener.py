@@ -12,6 +12,7 @@ from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
 from tf2_ros.transform_listener import TransformListener
 from std_msgs.msg import Float32
+from itertools import combinations, permutations, product
 
 # This function is a stripped down version of the code in
 # https://github.com/matthew-brett/transforms3d/blob/f185e866ecccb66c545559bc9f2e19cb5025e0ab/transforms3d/euler.py
@@ -65,13 +66,16 @@ class FrameListener(Node):
             self.get_logger().info(f"duty_cycle: {self.duty_cycle}")
             self.get_logger().info(f"pairs: {self.pairs}")
         else:
-            self.ground_truth = 'T01'
-            self.nodes_config = {'T01': {'num_antennas': 4, 'names': ['A', 'B', 'C', 'D']}, 'T02': {'num_antennas': 2, 'names': [
-                'A', 'B']}, 'tello1': {'num_antennas': 2, 'names': ['A', 'B']}, 'tello2': {'num_antennas': 2, 'names': ['A', 'B']}}
+            # Variables for manual execution and test
+            self.ground_truth = 'all'
+            self.nodes_config = {'T01': {'num_antennas': 2, 'names': ['A', 'B']},
+                                 'T02': {'num_antennas': 2, 'names': ['A', 'B']},
+                                 'tello1': {'num_antennas': 1, 'names': ['A']},
+                                 'tello2': {'num_antennas': 1, 'names': ['A']}}
             self.max_freq = 400.0
             self.duty_cycle = 1.0
             self.mean_noise = 0.0
-            self.std_dev_noise = 0.1
+            self.std_dev_noise = 0.2
             self.pairs = "T02_tello1_tello2".split('_')
             self.get_logger().info("No arguments received")
 
@@ -89,7 +93,7 @@ class FrameListener(Node):
         # self.tf_publisher_ = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}/tf/antenna', 10)
 
         # Declare and acquire target frame
-        self.target_frame = f'/{self.ground_truth}/tf/base_link'
+        # self.target_frame = f'/{self.ground_truth}/tf/base_link'
         # Call on_timer function
         # TODO verify if we have to use the variable max_freq or duty_cycle
         self.timer = self.create_timer(1.0/self.max_freq, self.on_timer)
@@ -103,22 +107,42 @@ class FrameListener(Node):
         return publishers
 
     def generate_antennas_names(self):
-        origin_config = self.nodes_config[self.ground_truth]
-        self.origin_antennas = [
-            f'{self.ground_truth}/tf/{antenna}' for antenna in origin_config['names']]
-        for elem in self.pairs:
-            end_config = self.nodes_config[elem]
-            self.end_antennas.append(
-                [f'{elem}/tf/{antenna}' for antenna in end_config['names']])
-        self.end_antennas = [
-            item for sublist in self.end_antennas for item in sublist]
-        # Generate the combination of antennas
-        self.measurements = [
-            (origin, end) for origin in self.origin_antennas for end in self.end_antennas]
+        # Case when calculating distance between all antennas
+        if self.ground_truth == 'all':
+            # Iterate over all the robots
+            for elem in self.nodes_config:
+                # Get the configuration of the robot
+                config = self.nodes_config[elem]
+                # Append the names of the antennas to the list
+                self.origin_antennas.append([f'{elem}/tf/{antenna}' for antenna in config['names']])
+            # Flatten the list of antennas
+            self.origin_antennas = [item for sublist in self.origin_antennas for item in sublist]
+            # Generate permutations of the antennas
+            self.measurements = list(permutations(self.origin_antennas, 2))
+            # Remove the permutations that are in the same robot (e.g. T01/tf/A -> T01/tf/B) since we do not want to calculate the distance between them
+            self.measurements = [elem for elem in self.measurements if elem[0].split('/')[0] != elem[1].split('/')[0]]
+
+        # Case when calculating distance between all antennas of a robot (ground_truth) and all antennas of other robots (pairs)
+        else:
+            # Get the configuration of the ground_truth robot
+            origin_config = self.nodes_config[self.ground_truth]
+            # Append the names of the antennas to the list
+            self.origin_antennas = [f'{self.ground_truth}/tf/{antenna}' for antenna in origin_config['names']]
+            # Iterate over all the robots
+            for elem in self.pairs:
+                # Get the configuration of the robots in pairs
+                end_config = self.nodes_config[elem]
+                # Append the names of the antennas to the list
+                self.end_antennas.append([f'{elem}/tf/{antenna}' for antenna in end_config['names']])
+            # Flatten the list of antennas
+            self.end_antennas = [item for sublist in self.end_antennas for item in sublist]
+            # Generate the combination of antennas
+            self.measurements = list(product(self.origin_antennas, self.end_antennas))
+            # self.measurements = [(origin, end) for origin in self.origin_antennas for end in self.end_antennas]
+
 
         self.get_logger().info('------------------')
         self.get_logger().info(f'origin: {self.ground_truth}')
-        self.get_logger().info(f'origin_config: {origin_config}')
         self.get_logger().info(f'origin_antennas: {self.origin_antennas}')
         self.get_logger().info(f'end_antennas: {self.end_antennas}')
         self.get_logger().info(f'measurements: {self.measurements}')
@@ -134,12 +158,10 @@ class FrameListener(Node):
         # Obtain the origin and end from the variable self.measuments to generate the transforms (origin, end)
         to_frame_rel = self.measurements[idx][0]
         from_frame_rel = self.measurements[idx][1]
+        print(f'To: {to_frame_rel}, From: {from_frame_rel}')
         # Get the transform between the origin and the end
         try:
-            t = self.tf_buffer.lookup_transform(
-                to_frame_rel,
-                from_frame_rel,
-                rclpy.time.Time())
+            t = self.tf_buffer.lookup_transform(to_frame_rel, from_frame_rel, rclpy.time.Time())
             # calculate the norm of the vector
             t_x = t.transform.translation.x
             t_y = t.transform.translation.y
@@ -151,10 +173,8 @@ class FrameListener(Node):
             # Add noise to the norm
             norm += np.random.normal(self.mean_noise, self.std_dev_noise)
             # Publish the norm
-            publisher_ = self.publishers_[
-                f'from_{to_frame_rel}_to_{from_frame_rel}'][0]
-            msg = self.publishers_[
-                f'from_{to_frame_rel}_to_{from_frame_rel}'][1]
+            publisher_ = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][0]
+            msg = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][1]
             msg.data = norm
             publisher_.publish(msg)
             # Print the information
@@ -167,6 +187,7 @@ class FrameListener(Node):
         except TransformException as ex:
             self.get_logger().info(
                 f'Could not transform {to_frame_rel} to {from_frame_rel}: {ex}')
+            # exit(0)
             return
 
             # print(f'origin: {origin}, end: {end}')
