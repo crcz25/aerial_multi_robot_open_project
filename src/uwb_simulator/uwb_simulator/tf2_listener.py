@@ -51,53 +51,73 @@ class FrameListener(Node):
                                           history=rclpy.qos.HistoryPolicy.KEEP_LAST,
                                           depth=1)
 
-        # Get parameters from the parameter server
-        if len(sys.argv) > 1:
-            self.ground_truth = sys.argv[1]
-            self.nodes_config = ast.literal_eval(sys.argv[2])
-            self.max_freq = float(sys.argv[3])
-            self.duty_cycle = float(sys.argv[4])
-            self.mean_noise = float(sys.argv[5])
-            self.std_dev_noise = float(sys.argv[6])
-            self.pairs = sys.argv[7].split('_')
-            self.get_logger().info(f"robot_name: {self.ground_truth}")
-            self.get_logger().info(f"nodes_config: {self.nodes_config}")
-            self.get_logger().info(f"max_freq: {self.max_freq}")
-            self.get_logger().info(f"duty_cycle: {self.duty_cycle}")
-            self.get_logger().info(f"pairs: {self.pairs}")
-        else:
-            # Variables for manual execution and test
-            self.ground_truth = 'all'
-            self.nodes_config = {'T01': {'num_antennas': 2, 'names': ['A', 'B']},
-                                 'T02': {'num_antennas': 2, 'names': ['A', 'B']},
-                                 'tello1': {'num_antennas': 1, 'names': ['A']},
-                                 'tello2': {'num_antennas': 1, 'names': ['A']}}
-            self.max_freq = 400.0
-            self.duty_cycle = 1.0
-            self.mean_noise = 0.0
-            self.std_dev_noise = 0.2
-            self.pairs = "T02_tello1_tello2".split('_')
-            self.get_logger().info("No arguments received")
+        # Declare the parameters
+        self.declare_parameter('nodes_config', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('ground_truth', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('max_freq', rclpy.Parameter.Type.INTEGER)
+        self.declare_parameter('duty_cycle', rclpy.Parameter.Type.INTEGER)
+        self.declare_parameter('mean', rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter('std_dev', rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter('pairs_to_measure', rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter('antennas', rclpy.Parameter.Type.STRING_ARRAY)
+        # Get the parameters
+        self.nodes_config = self.get_parameter_or('nodes_config', None)
+        self.ground_truth = self.get_parameter_or('ground_truth', None)
+        self.max_freq = self.get_parameter_or('max_freq', None)
+        self.duty_cycle = self.get_parameter_or('duty_cycle', None)
+        self.mean_noise = self.get_parameter_or('mean', None)
+        self.std_dev_noise = self.get_parameter_or('std_dev', None)
+        self.pairs = self.get_parameter_or('pairs_to_measure', None)
+        self.antennas_names = self.get_parameter_or('antennas', None)
+        # Print the parameters
+        self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
+        self.get_logger().info(f"robot_name: {self.ground_truth.value}")
+        self.get_logger().info(f"max_freq: {self.max_freq.value}")
+        self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
+        self.get_logger().info(f"mean: {self.mean_noise.value}")
+        self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
+        self.get_logger().info(f"pairs: {self.pairs.value}")
+        self.get_logger().info(f"antennas: {self.antennas_names.value}")
 
+        # Convert the nodes from string to dictionray
+        self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
+        self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
+
+        # Check if the pairs are all in the nodes config
+        for pair in self.pairs.value:
+            if pair not in self.nodes_config_dict:
+                self.get_logger().error(f"Pair {pair} is not in the nodes_config")
+
+        # Check if the measurements are between an origind and a destination or all to all
+        if self.ground_truth.value == 'all':
+            self.get_logger().info(f"Measuring all to all")
+            # Generate the combination of antennas
+            self.measurements = list(permutations(self.antennas_names.value, 2))
+            # Remove the permutations that are in the same robot (e.g. T01_A -> T01_B) since we do not want to calculate the distance between them
+            self.measurements = [elem for elem in self.measurements if elem[0].split('_')[0] != elem[1].split('_')[0]]
+        else:
+            self.get_logger().info(f"Measuring {self.ground_truth.value} to all")
+            # Filter the antennas of the origin
+            self.origin_antennas = [antenna for antenna in self.antennas_names.value if self.ground_truth.value in antenna]
+            self.end_antennas = [antenna for antenna in self.antennas_names.value if antenna not in self.origin_antennas]
+            self.get_logger().info(f"Origin antennas: {self.origin_antennas}")
+            self.get_logger().info(f"End antennas: {self.end_antennas}")
+            # Generate the combination of antennas
+            self.measurements = list(product(self.origin_antennas, self.end_antennas))
+        self.get_logger().info(f"Measurements to calculate: {self.measurements}")
+
+        # Create the buffer and the listener
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
-        # Generate the names of the antennas
-        self.origin_antennas = []
-        self.end_antennas = []
-        self.measurements = []
-        self.generate_antennas_names()
-
         # Generate dictionary of publishers
         self.publishers_ = self.generate_publishers_names()
-        # self.tf_publisher_ = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}/tf/antenna', 10)
 
-        # Declare and acquire target frame
-        # self.target_frame = f'/{self.ground_truth}/tf/base_link'
         # Call on_timer function
         # TODO verify if we have to use the variable max_freq or duty_cycle
-        self.timer = self.create_timer(1.0/self.max_freq, self.on_timer)
+        self.timer = self.create_timer(1.0 / self.max_freq.value, self.on_timer)
         self.i = 0
+
         # TODO: Add the subscription to the ranges topic
 
     def generate_publishers_names(self):
@@ -105,48 +125,6 @@ class FrameListener(Node):
         for origin, end in self.measurements:
             publishers[f'from_{origin}_to_{end}'] = (self.create_publisher(Float32, f'from_{origin}_to_{end}', 10), Float32())
         return publishers
-
-    def generate_antennas_names(self):
-        # Case when calculating distance between all antennas
-        if self.ground_truth == 'all':
-            # Iterate over all the robots
-            for elem in self.nodes_config:
-                # Get the configuration of the robot
-                config = self.nodes_config[elem]
-                # Append the names of the antennas to the list
-                self.origin_antennas.append([f'{elem}/tf/{antenna}' for antenna in config['names']])
-            # Flatten the list of antennas
-            self.origin_antennas = [item for sublist in self.origin_antennas for item in sublist]
-            # Generate permutations of the antennas
-            self.measurements = list(permutations(self.origin_antennas, 2))
-            # Remove the permutations that are in the same robot (e.g. T01/tf/A -> T01/tf/B) since we do not want to calculate the distance between them
-            self.measurements = [elem for elem in self.measurements if elem[0].split('/')[0] != elem[1].split('/')[0]]
-
-        # Case when calculating distance between all antennas of a robot (ground_truth) and all antennas of other robots (pairs)
-        else:
-            # Get the configuration of the ground_truth robot
-            origin_config = self.nodes_config[self.ground_truth]
-            # Append the names of the antennas to the list
-            self.origin_antennas = [f'{self.ground_truth}/tf/{antenna}' for antenna in origin_config['names']]
-            # Iterate over all the robots
-            for elem in self.pairs:
-                # Get the configuration of the robots in pairs
-                end_config = self.nodes_config[elem]
-                # Append the names of the antennas to the list
-                self.end_antennas.append([f'{elem}/tf/{antenna}' for antenna in end_config['names']])
-            # Flatten the list of antennas
-            self.end_antennas = [item for sublist in self.end_antennas for item in sublist]
-            # Generate the combination of antennas
-            self.measurements = list(product(self.origin_antennas, self.end_antennas))
-            # self.measurements = [(origin, end) for origin in self.origin_antennas for end in self.end_antennas]
-
-
-        self.get_logger().info('------------------')
-        self.get_logger().info(f'origin: {self.ground_truth}')
-        self.get_logger().info(f'origin_antennas: {self.origin_antennas}')
-        self.get_logger().info(f'end_antennas: {self.end_antennas}')
-        self.get_logger().info(f'measurements: {self.measurements}')
-        self.get_logger().info('------------------')
 
     def on_timer(self):
         # Iterate over the pairs of nodes to calculate the transforms
@@ -158,7 +136,7 @@ class FrameListener(Node):
         # Obtain the origin and end from the variable self.measuments to generate the transforms (origin, end)
         to_frame_rel = self.measurements[idx][0]
         from_frame_rel = self.measurements[idx][1]
-        print(f'To: {to_frame_rel}, From: {from_frame_rel}')
+        # print(f'To: {to_frame_rel}, From: {from_frame_rel}')
         # Get the transform between the origin and the end
         try:
             t = self.tf_buffer.lookup_transform(to_frame_rel, from_frame_rel, rclpy.time.Time())
@@ -171,7 +149,7 @@ class FrameListener(Node):
             # Calculate the norm of the vector
             norm = np.linalg.norm([t_x, t_y, t_z])
             # Add noise to the norm
-            norm += np.random.normal(self.mean_noise, self.std_dev_noise)
+            norm += np.random.normal(self.mean_noise.value, self.std_dev_noise.value)
             # Publish the norm
             publisher_ = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][0]
             msg = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][1]
@@ -185,12 +163,9 @@ class FrameListener(Node):
             # print(f'norm: {norm}')
             # print()
         except TransformException as ex:
-            self.get_logger().info(
-                f'Could not transform {to_frame_rel} to {from_frame_rel}: {ex}')
+            # self.get_logger().info(f'Could not transform {to_frame_rel} to {from_frame_rel}: {ex}')
             # exit(0)
             return
-
-            # print(f'origin: {origin}, end: {end}')
         return
 
 

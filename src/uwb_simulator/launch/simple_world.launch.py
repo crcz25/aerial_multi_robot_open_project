@@ -85,11 +85,17 @@ def generate_launch_description():
     robots_in_config = config_launch.get_robots_from_config()
     uwb_nodes_in_config = config_launch.get_uwb_nodes_from_config()
     uwb_ranges_in_config = config_launch.get_uwb_ranges_from_config()
-    # print("YAML FILE")
-    # print(uwb_nodes_in_config)
-    # print(ground_config)
 
+    # Create the names of the antennas
+    antennas_names = []
+    # Iterate over the uwb nodes
+    for node, config_node in uwb_nodes_in_config.items():
+        # Iterate over the antennas names
+        for antenna in config_node['names']:
+            # Create the name of the antenna and save it
+            antennas_names.append(f'{node}_{antenna}')
 
+    # Iterate over the robots
     for num, robot in enumerate(robots_in_config):
         # print(num, robot)
         if "tello" in robot.lower():
@@ -241,16 +247,16 @@ def generate_launch_description():
         executable='tf2_listener',
         output='screen',
         emulate_tty=True,
-        arguments=[
-            str(uwb_ranges_in_config['ground_truth']), # robot_name of the ground truth
-            str(uwb_nodes_in_config), # nodes config
-            str(uwb_ranges_in_config['max_twr_freq']), # max_twr_freq
-            str(uwb_ranges_in_config['duty_cycle']), # duty_cycle
-            str(uwb_ranges_in_config['mean']), # mean
-            str(uwb_ranges_in_config['std_dev']), # std_dev
-            uwb_ranges_in_config['ranges'], # ranges
-            
-        ]
+        parameters=[{
+            'nodes_config': str(uwb_nodes_in_config), # uwb_nodes_in_config
+            'ground_truth': uwb_ranges_in_config['ground_truth'], # robot_name of the ground truth
+            'max_freq': uwb_ranges_in_config['max_twr_freq'], # max_twr_freq
+            'duty_cycle': uwb_ranges_in_config['duty_cycle'], # duty_cycle
+            'mean': uwb_ranges_in_config['mean'], # mean of the noise
+            'std_dev': uwb_ranges_in_config['std_dev'], # std_dev of the noise
+            'pairs_to_measure': uwb_ranges_in_config['ranges'], # ranges to be calculated
+            'antennas': antennas_names # Names of the antennas
+        }],
     )
     launch_description.add_action(listener)
 

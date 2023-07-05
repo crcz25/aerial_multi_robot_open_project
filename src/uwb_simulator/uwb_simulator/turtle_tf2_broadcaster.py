@@ -51,7 +51,7 @@ class AntennaTfBroadcaster(Node):
             self.get_logger().info(f"robot_name: {self.robot_name}")
             self.get_logger().info(f"num_antennas: {self.num_antennas}")
             self.get_logger().info(f"names_antennas: {self.names_antennas}")
-            self.transformations = [tf2_ros.TransformStamped() for i in range(self.num_antennas)]
+            self.transformations = [tf2_ros.TransformStamped() for _ in range(self.num_antennas)]
 
         # Initialize the transform broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -61,7 +61,7 @@ class AntennaTfBroadcaster(Node):
                                                      self.handle_turtle_pose,
                                                      qos_profile=qos_policy)
         # Publisher of the antenna transforms
-        self.publisher = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}/tf/antenna', 10)
+        self.publisher = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}_antennas', 10)
         self.subscription  # prevent unused variable warning
         self.odom_msg = nav_msgs.msg.Odometry()
 
@@ -84,7 +84,7 @@ class AntennaTfBroadcaster(Node):
             # Read message content and assign it to
             t.header.stamp = self.get_clock().now().to_msg()
             t.header.frame_id = f"{self.robot_name}_base_link"
-            t.child_frame_id = f"{self.robot_name}/tf/{self.names_antennas[i]}"
+            t.child_frame_id = f"{self.robot_name}_{self.names_antennas[i]}"
             # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
             t.transform.translation.x = 0.5*np.cos(directions[i])# + pose.position.x
             t.transform.translation.y = 0.5*np.sin(directions[i])# + pose.position.y
