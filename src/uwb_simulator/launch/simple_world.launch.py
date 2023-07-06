@@ -11,7 +11,7 @@ import os
 from pathlib import Path
 
 from uwb_simulator.config_launcher import ConfigLaunch
-
+from itertools import combinations, permutations, product
 
 def generate_launch_description():
     launch_description = LaunchDescription()
@@ -94,6 +94,33 @@ def generate_launch_description():
         for antenna in config_node['names']:
             # Create the name of the antenna and save it
             antennas_names.append(f'{node}_{antenna}')
+
+    # Create the names of the publishers for each measurement
+    type_measurement = uwb_ranges_in_config['type_measurement']
+    ground_truth = uwb_ranges_in_config['ground_truth']
+    measurements = []
+    # Check if the measurements are between an origind and a destination or all to all
+    if type_measurement == 'all':
+        print(f"Measuring all to all")
+        # Generate the combination of antennas
+        measurements = list(permutations(antennas_names, 2))
+        # Remove the permutations that are in the same robot (e.g. T01_A -> T01_B) since we do not want to calculate the distance between them
+        measurements = [elem for elem in measurements if elem[0].split('_')[0] != elem[1].split('_')[0]]
+    else:
+        print(f"Measuring {ground_truth} to all")
+        # Filter the antennas of the origin
+        origin_antennas = [antenna for antenna in antennas_names if ground_truth in antenna]
+        end_antennas = [antenna for antenna in antennas_names if antenna not in origin_antennas]
+        # Generate the combination of antennas
+        measurements = list(product(origin_antennas, end_antennas))
+        print(f"Origin antennas: {origin_antennas}")
+        print(f"End antennas: {end_antennas}")
+    print(f"Measurements to calculate (Topics to publish): {measurements}")
+    # Generate full names of the topics
+    topics_names = []
+    for origin, end in measurements:
+        topics_names.append(f'from_{origin}_to_{end}')
+    print(f"Topics names: {topics_names}")
 
     # Iterate over the robots
     for num, robot in enumerate(robots_in_config):
@@ -255,7 +282,9 @@ def generate_launch_description():
             'mean': uwb_ranges_in_config['mean'], # mean of the noise
             'std_dev': uwb_ranges_in_config['std_dev'], # std_dev of the noise
             'pairs_to_measure': uwb_ranges_in_config['ranges'], # ranges to be calculated
-            'antennas': antennas_names # Names of the antennas
+            'antennas': antennas_names, # Names of the antennas
+            'measurements': str(measurements), # Names of the measurements
+            'topics_to_publish': topics_names # Names of the topics to publish
         }],
     )
     launch_description.add_action(listener)

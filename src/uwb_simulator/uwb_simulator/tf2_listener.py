@@ -60,6 +60,8 @@ class FrameListener(Node):
         self.declare_parameter('std_dev', rclpy.Parameter.Type.DOUBLE)
         self.declare_parameter('pairs_to_measure', rclpy.Parameter.Type.STRING_ARRAY)
         self.declare_parameter('antennas', rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter('measurements', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('topics_to_publish', rclpy.Parameter.Type.STRING_ARRAY)
         # Get the parameters
         self.nodes_config = self.get_parameter_or('nodes_config', None)
         self.ground_truth = self.get_parameter_or('ground_truth', None)
@@ -69,6 +71,8 @@ class FrameListener(Node):
         self.std_dev_noise = self.get_parameter_or('std_dev', None)
         self.pairs = self.get_parameter_or('pairs_to_measure', None)
         self.antennas_names = self.get_parameter_or('antennas', None)
+        self.measurements = self.get_parameter_or('measurements', None)
+        self.topics_to_publish = self.get_parameter_or('topics_to_publish', None)
         # Print the parameters
         self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
         self.get_logger().info(f"robot_name: {self.ground_truth.value}")
@@ -78,10 +82,16 @@ class FrameListener(Node):
         self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
         self.get_logger().info(f"pairs: {self.pairs.value}")
         self.get_logger().info(f"antennas: {self.antennas_names.value}")
+        self.get_logger().info(f"measurements: {self.measurements.value}")
+        self.get_logger().info(f"topics_to_publish: {self.topics_to_publish.value}")
 
         # Convert the nodes from string to dictionray
         self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
         self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
+
+        # Convert the measurements from string to list
+        self.measurements_list = ast.literal_eval(self.measurements.value)
+        self.get_logger().info(f"measurements converted: {self.measurements_list}")
 
         # Check if the pairs are all in the nodes config
         for pair in self.pairs.value:
@@ -89,28 +99,29 @@ class FrameListener(Node):
                 self.get_logger().error(f"Pair {pair} is not in the nodes_config")
 
         # Check if the measurements are between an origind and a destination or all to all
-        if self.ground_truth.value == 'all':
-            self.get_logger().info(f"Measuring all to all")
-            # Generate the combination of antennas
-            self.measurements = list(permutations(self.antennas_names.value, 2))
-            # Remove the permutations that are in the same robot (e.g. T01_A -> T01_B) since we do not want to calculate the distance between them
-            self.measurements = [elem for elem in self.measurements if elem[0].split('_')[0] != elem[1].split('_')[0]]
-        else:
-            self.get_logger().info(f"Measuring {self.ground_truth.value} to all")
-            # Filter the antennas of the origin
-            self.origin_antennas = [antenna for antenna in self.antennas_names.value if self.ground_truth.value in antenna]
-            self.end_antennas = [antenna for antenna in self.antennas_names.value if antenna not in self.origin_antennas]
-            self.get_logger().info(f"Origin antennas: {self.origin_antennas}")
-            self.get_logger().info(f"End antennas: {self.end_antennas}")
-            # Generate the combination of antennas
-            self.measurements = list(product(self.origin_antennas, self.end_antennas))
-        self.get_logger().info(f"Measurements to calculate: {self.measurements}")
+        # if self.ground_truth.value == 'all':
+        #     self.get_logger().info(f"Measuring all to all")
+        #     # Generate the combination of antennas
+        #     self.measurements = list(permutations(self.antennas_names.value, 2))
+        #     # Remove the permutations that are in the same robot (e.g. T01_A -> T01_B) since we do not want to calculate the distance between them
+        #     self.measurements = [elem for elem in self.measurements if elem[0].split('_')[0] != elem[1].split('_')[0]]
+        # else:
+        #     self.get_logger().info(f"Measuring {self.ground_truth.value} to all")
+        #     # Filter the antennas of the origin
+        #     self.origin_antennas = [antenna for antenna in self.antennas_names.value if self.ground_truth.value in antenna]
+        #     self.end_antennas = [antenna for antenna in self.antennas_names.value if antenna not in self.origin_antennas]
+        #     self.get_logger().info(f"Origin antennas: {self.origin_antennas}")
+        #     self.get_logger().info(f"End antennas: {self.end_antennas}")
+        #     # Generate the combination of antennas
+        #     self.measurements = list(product(self.origin_antennas, self.end_antennas))
+        # self.get_logger().info(f"Measurements to calculate: {self.measurements}")
 
         # Create the buffer and the listener
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
         # Generate dictionary of publishers
+        # TODO verify if there is a way of doing this without the function generate_publishers_names, maybe using the parameter directly (measurements and topics_to_publish)
         self.publishers_ = self.generate_publishers_names()
 
         # Call on_timer function
@@ -122,8 +133,8 @@ class FrameListener(Node):
 
     def generate_publishers_names(self):
         publishers = {}
-        for origin, end in self.measurements:
-            publishers[f'from_{origin}_to_{end}'] = (self.create_publisher(Float32, f'from_{origin}_to_{end}', 10), Float32())
+        for topic in self.topics_to_publish.value:
+            publishers[topic] = (self.create_publisher(Float32, topic, 10), Float32())
         return publishers
 
     def on_timer(self):
@@ -132,10 +143,10 @@ class FrameListener(Node):
         if self.i == self.max_freq:
             self.i = 0
         # Get the index of the pair to calculate
-        idx = self.i % len(self.measurements)
+        idx = self.i % len(self.measurements_list)
         # Obtain the origin and end from the variable self.measuments to generate the transforms (origin, end)
-        to_frame_rel = self.measurements[idx][0]
-        from_frame_rel = self.measurements[idx][1]
+        to_frame_rel = self.measurements_list[idx][0]
+        from_frame_rel = self.measurements_list[idx][1]
         # print(f'To: {to_frame_rel}, From: {from_frame_rel}')
         # Get the transform between the origin and the end
         try:
