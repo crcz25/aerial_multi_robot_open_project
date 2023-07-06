@@ -289,4 +289,26 @@ def generate_launch_description():
     )
     launch_description.add_action(listener)
 
+    # Add plotter of the ranges
+    plotter = Node(
+        package='uwb_simulator',
+        executable='plotter',
+        output='screen',
+        emulate_tty=True,
+        parameters=[{
+            'nodes_config': str(uwb_nodes_in_config), # uwb_nodes_in_config
+            'ground_truth': uwb_ranges_in_config['ground_truth'], # robot_name of the ground truth
+            'max_freq': uwb_ranges_in_config['max_twr_freq'], # max_twr_freq
+            'duty_cycle': uwb_ranges_in_config['duty_cycle'], # duty_cycle
+            'mean': uwb_ranges_in_config['mean'], # mean of the noise
+            'std_dev': uwb_ranges_in_config['std_dev'], # std_dev of the noise
+            'pairs_to_measure': uwb_ranges_in_config['ranges'], # ranges to be calculated
+            'antennas': antennas_names, # Names of the antennas
+            'measurements': str(measurements), # Names of the measurements
+            'topics_to_subscribe': topics_names # Names of the topics to publish
+        }],
+    )
+    launch_description.add_action(plotter)
+
+
     return launch_description
