@@ -12,6 +12,7 @@ from std_msgs.msg import Float32
 from itertools import combinations, permutations, product
 import numpy as np
 import csv
+import time
 
 from tf2_ros import TransformException
 from tf2_ros.buffer import Buffer
@@ -104,14 +105,17 @@ class Plotter(Node):
             self.subscribers_.append(uwb_distance_subs)
         # Initialize the corresponding ranges
         self.ranges_ = np.zeros((len(self.topics_to_subscribe.value), 1))
+
         # Initialize the corresponding global positions
         self.global_positions_ = np.zeros((len(self.antennas_names.value), 3))
 
         # Create the buffer and the listener
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
+        # Create the timer to read the positions
         self.timer_positions = self.create_timer(1.0 / (self.max_freq.value * 1.5), self.read_positions)
-        # Create the buffer and the listener
+
+        # Create the timer to save the data
         self.timer = self.create_timer(1.0 / self.max_freq.value, self.on_timer)
 
         # Create the variables to save the data in a csv file
@@ -121,11 +125,17 @@ class Plotter(Node):
             for topic in self.topics_to_subscribe.value:
                 cols.append(f'{topic}_range')
             for antenna in self.antennas_names.value:
-                cols.append(f'{antenna}_x')
-                cols.append(f'{antenna}_y')
-                cols.append(f'{antenna}_z')
+                # Check if the antenna has the name of the ground truth robot:
+                if antenna.startswith(self.ground_truth.value):
+                    # Append GT to the beginning of the name
+                    cols.append(f'GT_{antenna}_x')
+                    cols.append(f'GT_{antenna}_y')
+                    cols.append(f'GT_{antenna}_z')
+                else:
+                    cols.append(f'{antenna}_x')
+                    cols.append(f'{antenna}_y')
+                    cols.append(f'{antenna}_z')
             writer.writerow(cols)
-
 
     # Callback function for the subscriber of the topic
     def read_distane(self, idx):
@@ -159,7 +169,7 @@ class Plotter(Node):
         self.get_logger().info(f"Saving to csv")
         self.get_logger().info(f"Ranges: \n{self.ranges_}")
         self.get_logger().info(f"Positions: \n{self.global_positions_}")
-        
+
         # Save the data in a csv file
         with open(f'measurements.csv', 'a') as f:
             writer = csv.writer(f)
@@ -171,6 +181,10 @@ class Plotter(Node):
                     cols.append(coord)
             writer.writerow(cols)
 
+        # # Save npz file
+        # self.get_logger().info(f"Saving to npz")
+        # np.savez(f'measurements.npz', ranges=self.ranges_, positions=self.global_positions_)
+
         pass
 
 def main(args=None):
@@ -178,6 +192,9 @@ def main(args=None):
     print(args)
 
     node = Plotter()
+
+    # Sleep of 2.5 seconds to wait for the topics to be created
+    time.sleep(2.5)
 
     rclpy.spin(node)
 
