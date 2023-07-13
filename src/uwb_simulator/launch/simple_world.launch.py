@@ -116,11 +116,18 @@ def generate_launch_description():
         print(f"Origin antennas: {origin_antennas}")
         print(f"End antennas: {end_antennas}")
     print(f"Measurements to calculate (Topics to publish): {measurements}")
-    # Generate full names of the topics
-    topics_names = []
+    # Generate names of the topics to publish or subscribe related to the distances
+    topics_distances = []
     for origin, end in measurements:
-        topics_names.append(f'from_{origin}_to_{end}')
-    print(f"Topics names: {topics_names}")
+        topics_distances.append(f'from_{origin}_to_{end}')
+    print(f"Topics names: {topics_distances}")
+    # Generaet the names of the topics to publish or subscribe related to the global positions of the antennas
+    topics_global_positions = []
+    # Iterate over the robots in the system
+    for robot_name in robots_in_config:
+        # Append the subscriber to the list
+        topics_global_positions.append(f'/{robot_name}_antennas')
+    print(f"Topics names: {topics_global_positions}")
 
     # Iterate over the robots
     for num, robot in enumerate(robots_in_config):
@@ -284,7 +291,7 @@ def generate_launch_description():
             'pairs_to_measure': uwb_ranges_in_config['ranges'], # ranges to be calculated
             'antennas': antennas_names, # Names of the antennas
             'measurements': str(measurements), # Names of the measurements
-            'topics_to_publish': topics_names # Names of the topics to publish
+            'topics_to_publish': topics_distances # Names of the topics to publish
         }],
     )
     launch_description.add_action(listener)
@@ -305,7 +312,10 @@ def generate_launch_description():
             'pairs_to_measure': uwb_ranges_in_config['ranges'], # ranges to be calculated
             'antennas': antennas_names, # Names of the antennas
             'measurements': str(measurements), # Names of the measurements
-            'topics_to_subscribe': topics_names # Names of the topics to publish
+            'distances_to_subscribe': topics_distances, # Names of the topics to publish
+            'positions_to_subscribe': topics_global_positions, # Names of the topics to publish
+            'write_to_file': uwb_ranges_in_config['write_to_file'], # write_to_file
+            'localization_method': uwb_ranges_in_config['localization_method'], # location_method
         }],
     )
     launch_description.add_action(plotter)
