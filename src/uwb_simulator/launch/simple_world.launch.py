@@ -82,7 +82,7 @@ def generate_launch_description():
     )
 
     # Spawn the robots
-    robots_in_config = config_launch.get_robots_from_config()
+    robots_names_conf, robots_pos_conf = config_launch.get_robots_from_config()
     uwb_nodes_in_config = config_launch.get_uwb_nodes_from_config()
     uwb_ranges_in_config = config_launch.get_uwb_ranges_from_config()
 
@@ -124,14 +124,17 @@ def generate_launch_description():
     # Generaet the names of the topics to publish or subscribe related to the global positions of the antennas
     topics_global_positions = []
     # Iterate over the robots in the system
-    for robot_name in robots_in_config:
+    for robot_name in robots_names_conf:
         # Append the subscriber to the list
         topics_global_positions.append(f'/{robot_name}_antennas')
     print(f"Topics names: {topics_global_positions}")
 
     # Iterate over the robots
-    for num, robot in enumerate(robots_in_config):
-        # print(num, robot)
+    for num, robot_conf in enumerate(zip(robots_names_conf, *robots_pos_conf)):
+        robot = robot_conf[0]
+        robot_x_pos = robot_conf[1]
+        robot_y_pos = robot_conf[2]
+
         if "tello" in robot.lower():
             robot_ns = robot
             # Publish static transforms
@@ -168,7 +171,7 @@ def generate_launch_description():
                 arguments=[
                     '-entity', robot_ns,
                     '-robot_namespace', robot_ns,
-                    '-x', str(num + 2), '-y', str(num + 2),
+                    '-x', str(robot_x_pos), '-y', str(robot_y_pos),
                     '-topic', f'{robot_ns}/robot_description',
                     '-timeout', '120.0'
                 ]
@@ -244,7 +247,7 @@ def generate_launch_description():
                     '-entity', robot_ns,
                     '-file', tbot_sdf_path,
                     '-robot_namespace', robot_ns,
-                    '-x', str(num + 2), '-y', str(num + 2),
+                    '-x', str(robot_x_pos), '-y', str(robot_y_pos),
                     '-timeout', '120.0'
                 ]
             )
