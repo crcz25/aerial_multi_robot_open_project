@@ -69,7 +69,7 @@ class AntennaTfBroadcaster(Node):
         self.publisher = self.create_publisher(
             geometry_msgs.msg.TransformStamped,
             f'/{self.robot_name}_antennas',
-            10
+            qos_profile=qos_policy
         )
         self.subscription  # prevent unused variable warning
         self.odom_msg = nav_msgs.msg.Odometry()
@@ -108,6 +108,10 @@ class AntennaTfBroadcaster(Node):
             self.transformations[i] = t
             # Send the transformation
             self.tf_broadcaster.sendTransform(t)
+            # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
+            t.transform.translation.x += pose.position.x
+            t.transform.translation.y += pose.position.y
+            t.transform.translation.z = pose.position.z
             # Publish the transformation
             self.publisher.publish(t)
 
