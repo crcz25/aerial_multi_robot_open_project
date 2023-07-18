@@ -27,7 +27,7 @@ class ConfigLaunch:
     def get_uwb_nodes_from_config(self) -> Union[List[str], None]:
         uwb_nodes_config = self.config_dict.get('uwb_nodes', None)
 
-        uwb_nodes_names, *uwb_nodes_positions = (
+        uwb_nodes_names, uwb_nodes_positions = (
             self.extract_uwb_nodes_config(uwb_nodes_config)
         )
         return uwb_nodes_config, uwb_nodes_names, uwb_nodes_positions
@@ -85,11 +85,18 @@ class ConfigLaunch:
             uwb_nodes_in_config: Dict[str, Dict]
     ) -> Tuple[List[str], List[float], List[float]]:
         antennas_names = []
-        antennas_x_pos = []
-        antennas_y_pos = []
-        antennas_z_pos = []
+        nodes_antennas_positions = {}
 
         for node, config_node in uwb_nodes_in_config.items():
+
+            node_ant_positions = {
+                node: {
+                    'x': [],
+                    'y': [],
+                    'z': []
+                }
+            }
+
             # Iterate over the antennas names
             robot_antennas_names = config_node['names']
             for antenna in robot_antennas_names:
@@ -103,9 +110,10 @@ class ConfigLaunch:
                 if antennas_positions is None:
                     # We put none as many antennas exist
                     antennas_none_pos = [None] * len(robot_antennas_names)
-                    antennas_x_pos.extend(antennas_none_pos)
-                    antennas_y_pos.extend(antennas_none_pos)
-                    antennas_z_pos.extend(antennas_none_pos)
+                    
+                    node_ant_positions[node]['x'].extend(antennas_none_pos)
+                    node_ant_positions[node]['y'].extend(antennas_none_pos)
+                    node_ant_positions[node]['z'].extend(antennas_none_pos)
                 else:
                     # Check if there are less positions than antennas
                     if len(antennas_positions) < len(robot_antennas_names):
@@ -125,9 +133,18 @@ class ConfigLaunch:
                                 'a coordinate in its positions'
                             )
 
-                        antennas_x_pos.append(antenna_position[0])
-                        antennas_y_pos.append(antenna_position[1])
-                        antennas_z_pos.append(antenna_position[2])
+                        node_ant_positions[node]['x'].append(
+                            antenna_position[0]
+                        )
+                        node_ant_positions[node]['y'].append(
+                            antenna_position[1]
+                        )
+                        node_ant_positions[node]['z'].append(
+                            antenna_position[2]
+                        )
+
+                nodes_antennas_positions.update(node_ant_positions)
+
             except IndexError as e:
                 raise IndexError(
                     'Antennas are missing a coordinate or proper '
@@ -136,6 +153,6 @@ class ConfigLaunch:
             except ValueError as e:
                 raise e
         
-        return antennas_names, antennas_x_pos, antennas_y_pos, antennas_z_pos
+        return antennas_names, nodes_antennas_positions # antennas_x_pos, antennas_y_pos, antennas_z_pos
 
 
