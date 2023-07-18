@@ -72,7 +72,7 @@ class ConfigLaunch:
                 predef_robot_x_pos += 1
                 robots_position_type = 2
             else:
-                raise "Incompatible Robots' Configuration"
+                raise ValueError("Inconsistent Robots' Position Definition")
         
         return robots_name, robots_x_pos, robots_y_pos
 
