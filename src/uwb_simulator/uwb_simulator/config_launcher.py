@@ -25,8 +25,12 @@ class ConfigLaunch:
         return robots_names, robots_positions
 
     def get_uwb_nodes_from_config(self) -> Union[List[str], None]:
-        uwb_nodes_names = self.config_dict.get('uwb_nodes', None)
-        return uwb_nodes_names
+        uwb_nodes_config = self.config_dict.get('uwb_nodes', None)
+
+        uwb_nodes_names, *uwb_nodes_positions = (
+            self.extract_uwb_nodes_config(uwb_nodes_config)
+        )
+        return uwb_nodes_config, uwb_nodes_names, uwb_nodes_positions
 
     def get_uwb_ranges_from_config(self) -> Union[List[str], None]:
         uwb_ranges_names = self.config_dict.get('uwb_ranges', None)
@@ -35,7 +39,7 @@ class ConfigLaunch:
     def extract_robots_config(
             self,
             robots_config: List[Union[Dict[str, Dict], str]]
-    ) -> Tuple[List[str], List[int], List[int]]:
+    ) -> Tuple[List[str], List[float], List[float]]:
         robots_name = []
         robots_x_pos = []
         robots_y_pos = []
@@ -75,5 +79,63 @@ class ConfigLaunch:
                 raise ValueError("Inconsistent Robots' Position Definition")
         
         return robots_name, robots_x_pos, robots_y_pos
+    
+    def extract_uwb_nodes_config(
+            self,
+            uwb_nodes_in_config: Dict[str, Dict]
+    ) -> Tuple[List[str], List[float], List[float]]:
+        antennas_names = []
+        antennas_x_pos = []
+        antennas_y_pos = []
+        antennas_z_pos = []
+
+        for node, config_node in uwb_nodes_in_config.items():
+            # Iterate over the antennas names
+            robot_antennas_names = config_node['names']
+            for antenna in robot_antennas_names:
+                # Create the name of the antenna and save it
+                antennas_names.append(f'{node}_{antenna}')
+            
+            try:
+                # Try to get the list of antennas positions
+                antennas_positions = config_node.get('positions', None)
+
+                if antennas_positions is None:
+                    # We put none as many antennas exist
+                    antennas_none_pos = [None] * len(robot_antennas_names)
+                    antennas_x_pos.extend(antennas_none_pos)
+                    antennas_y_pos.extend(antennas_none_pos)
+                    antennas_z_pos.extend(antennas_none_pos)
+                else:
+                    # Check if there are less positions than antennas
+                    if len(antennas_positions) < len(robot_antennas_names):
+                        raise ValueError(
+                            f'Not all antennas for robot {node} have positions'
+                        )
+
+                    # If they exist, then go through each list of positions
+                    # for each antenna, and store it in the corresponding place
+                    # for the coordinates lists.
+                    for idx, antenna_position in enumerate(antennas_positions):
+
+                        # Check if the three coordinates exist
+                        if len(antenna_position) < 3:
+                            raise ValueError(
+                                f'Antenna {antennas_names[idx]} is missing '
+                                'a coordinate in its positions'
+                            )
+
+                        antennas_x_pos.append(antenna_position[0])
+                        antennas_y_pos.append(antenna_position[1])
+                        antennas_z_pos.append(antenna_position[2])
+            except IndexError as e:
+                raise IndexError(
+                    'Antennas are missing a coordinate or proper '
+                    f'definition: {e}'
+                )
+            except ValueError as e:
+                raise e
+        
+        return antennas_names, antennas_x_pos, antennas_y_pos, antennas_z_pos
 
 
