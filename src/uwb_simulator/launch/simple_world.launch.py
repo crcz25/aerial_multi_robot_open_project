@@ -83,17 +83,15 @@ def generate_launch_description():
 
     # Spawn the robots
     robots_names_conf, robots_pos_conf = config_launch.get_robots_from_config()
-    uwb_nodes_in_config = config_launch.get_uwb_nodes_from_config()
+    uwb_nodes_info = config_launch.get_uwb_nodes_from_config()
     uwb_ranges_in_config = config_launch.get_uwb_ranges_from_config()
 
-    # Create the names of the antennas
-    antennas_names = []
-    # Iterate over the uwb nodes
-    for node, config_node in uwb_nodes_in_config.items():
-        # Iterate over the antennas names
-        for antenna in config_node['names']:
-            # Create the name of the antenna and save it
-            antennas_names.append(f'{node}_{antenna}')
+    # Get UWB Nodes config dictionary
+    uwb_nodes_in_config = uwb_nodes_info[0]
+    # Get the UWB Nodes' names (antennas)
+    antennas_names = uwb_nodes_info[1]
+    # Get the UWB Nodes' positions
+    antennas_positions = uwb_nodes_info[2]
 
     # Create the names of the publishers for each measurement
     type_measurement = uwb_ranges_in_config['type_measurement']
