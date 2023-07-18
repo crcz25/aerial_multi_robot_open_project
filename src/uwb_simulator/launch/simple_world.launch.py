@@ -273,7 +273,8 @@ def generate_launch_description():
                     'num_antennas': int(
                         uwb_nodes_in_config[robot]['num_antennas']
                     ),
-                    'names_antennas': uwb_nodes_in_config[robot]['names']
+                    'names_antennas': uwb_nodes_in_config[robot]['names'],
+                    'positions_antennas': str(antennas_positions[robot])
                 }]
             )
             launch_description.add_action(tbot_state_pub)
