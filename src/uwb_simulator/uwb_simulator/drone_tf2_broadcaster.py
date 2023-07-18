@@ -46,13 +46,41 @@ class AntennaTfBroadcaster(Node):
         )
 
         # Get parameters from the parameter server
-        if len(sys.argv) > 1:
-            self.robot_name = sys.argv[1]
-            self.num_antennas = int(sys.argv[2])
-            self.names_antennas = sys.argv[3]
-            self.get_logger().info(f"robot_name: {self.robot_name}")
-            self.get_logger().info(f"num_antennas: {self.num_antennas}")
-            self.get_logger().info(f"names_antennas: {self.names_antennas}")
+        # if len(sys.argv) > 1:
+        #     self.robot_name = sys.argv[1]
+        #     self.num_antennas = int(sys.argv[2])
+        #     self.names_antennas = sys.argv[3]
+        #     self.get_logger().info(f"robot_name: {self.robot_name}")
+        #     self.get_logger().info(f"num_antennas: {self.num_antennas}")
+        #     self.get_logger().info(f"names_antennas: {self.names_antennas}")
+        #     self.transformations = [
+        #         tf2_ros.TransformStamped()
+        #         for _ in range(self.num_antennas)
+        #     ]
+        
+        # Declare the parameters
+        self.declare_parameter('robot_name', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('num_antennas', rclpy.Parameter.Type.INTEGER)
+        self.declare_parameter(
+            'names_antennas',
+            rclpy.Parameter.Type.STRING_ARRAY
+        )
+        # Get the parameters
+        robot_name = self.get_parameter_or('robot_name', None)
+        if robot_name:
+            self.robot_name = robot_name.value
+        num_antennas = self.get_parameter_or('num_antennas', None)
+        if num_antennas:
+            self.num_antennas = num_antennas.value
+        names_antennas = self.get_parameter_or('names_antennas', None)
+        if names_antennas:
+            self.names_antennas = names_antennas.value
+        # Print the parameters
+        self.get_logger().info(f"robot_name: {self.robot_name}")
+        self.get_logger().info(f"num_antennas: {self.num_antennas}")
+        self.get_logger().info(f"names_antennas: {self.names_antennas}")
+
+        if self.num_antennas:
             self.transformations = [
                 tf2_ros.TransformStamped()
                 for _ in range(self.num_antennas)

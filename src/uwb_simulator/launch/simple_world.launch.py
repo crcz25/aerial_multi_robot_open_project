@@ -199,9 +199,9 @@ def generate_launch_description():
                 executable='drone_tf2_base_rename',
                 output='screen',
                 emulate_tty=True,
-                arguments=[
-                    str(robot), # robot_name
-                ]
+                parameters=[{
+                    'robot_name': robot
+                }]
             )
             # Add transforms between the robot and the antennas
             drone_transforms = Node(
@@ -209,11 +209,13 @@ def generate_launch_description():
                 executable='drone_tf2_broadcaster',
                 output='screen',
                 emulate_tty=True,
-                arguments=[
-                    str(robot), # robot_name
-                    str(uwb_nodes_in_config[robot]['num_antennas']), # num_antennas
-                    uwb_nodes_in_config[robot]['names'], # names_antennas
-                ]
+                parameters=[{
+                    'robot_name': robot,
+                    'num_antennas': int(
+                        uwb_nodes_in_config[robot]['num_antennas']
+                    ),
+                    'names_antennas': uwb_nodes_in_config[robot]['names']
+                }]
             )
 
             launch_description.add_action(drone_base_rename)
@@ -255,9 +257,9 @@ def generate_launch_description():
                 executable='turtle_tf2_base_rename',
                 output='screen',
                 emulate_tty=True,
-                arguments=[
-                    str(robot), # robot_name
-                ]
+                parameters=[{
+                    'robot_name': robot
+                }]
             )
             # Add transforms between the robot and the antennas
             tbot_transforms = Node(
@@ -265,11 +267,13 @@ def generate_launch_description():
                 executable='turtle_tf2_broadcaster',
                 output='screen',
                 emulate_tty=True,
-                arguments=[
-                    str(robot), # robot_name
-                    str(uwb_nodes_in_config[robot]['num_antennas']), # num_antennas
-                    uwb_nodes_in_config[robot]['names'], # names_antennas
-                ]
+                parameters=[{
+                    'robot_name': robot,
+                    'num_antennas': int(
+                        uwb_nodes_in_config[robot]['num_antennas']
+                    ),
+                    'names_antennas': uwb_nodes_in_config[robot]['names']
+                }]
             )
             launch_description.add_action(tbot_state_pub)
             launch_description.add_action(tbot_start_gazebo_ros_spawner_cmd)
