@@ -1,3 +1,4 @@
+import ast
 import math
 import numpy as np
 import rclpy
@@ -44,14 +45,49 @@ class AntennaTfBroadcaster(Node):
                                           depth=1)
 
         # Get parameters from the parameter server
-        if len(sys.argv) > 1:
-            self.robot_name = sys.argv[1]
-            self.num_antennas = int(sys.argv[2])
-            self.names_antennas = sys.argv[3]
-            self.get_logger().info(f"robot_name: {self.robot_name}")
-            self.get_logger().info(f"num_antennas: {self.num_antennas}")
-            self.get_logger().info(f"names_antennas: {self.names_antennas}")
-            self.transformations = [tf2_ros.TransformStamped() for _ in range(self.num_antennas)]
+        # if len(sys.argv) > 1:
+        #     self.robot_name = sys.argv[1]
+        #     self.num_antennas = int(sys.argv[2])
+        #     self.names_antennas = sys.argv[3]
+        #     self.get_logger().info(f"robot_name: {self.robot_name}")
+        #     self.get_logger().info(f"num_antennas: {self.num_antennas}")
+        #     self.get_logger().info(f"names_antennas: {self.names_antennas}")
+        #     self.transformations = [tf2_ros.TransformStamped() for _ in range(self.num_antennas)]
+        # Declare the parameters
+        self.declare_parameter('robot_name', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('num_antennas', rclpy.Parameter.Type.INTEGER)
+        self.declare_parameter(
+            'names_antennas',
+            rclpy.Parameter.Type.STRING_ARRAY
+        )
+        self.declare_parameter(
+            'positions_antennas',
+            rclpy.Parameter.Type.STRING
+        )
+        # Get the parameters
+        robot_name = self.get_parameter_or('robot_name', None)
+        if robot_name:
+            self.robot_name = robot_name.value
+        num_antennas = self.get_parameter_or('num_antennas', None)
+        if num_antennas:
+            self.num_antennas = num_antennas.value
+        names_antennas = self.get_parameter_or('names_antennas', None)
+        if names_antennas:
+            self.names_antennas = names_antennas.value
+        pos_antennas = self.get_parameter_or('positions_antennas', None)
+        if pos_antennas:
+            self.pos_antennas = ast.literal_eval(pos_antennas.value)
+        # Print the parameters
+        self.get_logger().info(f"robot_name: {self.robot_name}")
+        self.get_logger().info(f"num_antennas: {self.num_antennas}")
+        self.get_logger().info(f"names_antennas: {self.names_antennas}")
+        self.get_logger().info(f"pos_antennas: {self.pos_antennas}")
+
+        if self.num_antennas:
+            self.transformations = [
+                tf2_ros.TransformStamped()
+                for _ in range(self.num_antennas)
+            ]
 
         # Initialize the transform broadcaster
         self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
@@ -64,6 +100,10 @@ class AntennaTfBroadcaster(Node):
         self.publisher = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}_antennas', qos_profile=qos_policy)
         self.subscription  # prevent unused variable warning
         self.odom_msg = nav_msgs.msg.Odometry()
+
+        self.antennas_x_pos = self.pos_antennas.get('x', None)
+        self.antennas_y_pos = self.pos_antennas.get('y', None)
+        self.antennas_z_pos = self.pos_antennas.get('z', None)
 
     def publish_transform(self):
         pass
@@ -78,7 +118,9 @@ class AntennaTfBroadcaster(Node):
         directions = np.linspace(0, 2*np.pi, self.num_antennas, endpoint=False)
 
         # Iterate over the antennas
-        for i in range(self.num_antennas):
+        for i, (antenna_x, antenna_y, antenna_z) in enumerate(zip(
+            self.antennas_x_pos, self.antennas_y_pos, self.antennas_z_pos
+        )):
             # Create a transform message and set its values
             t = self.transformations[i]
             # Read message content and assign it to
@@ -86,9 +128,18 @@ class AntennaTfBroadcaster(Node):
             t.header.frame_id = f"{self.robot_name}_base_link"
             t.child_frame_id = f"{self.robot_name}_{self.names_antennas[i]}"
             # Turtle only exists in 2D, thus we get x and y translation based on the direction of the antenna
-            t.transform.translation.x = 0.5*np.cos(directions[i])# + pose.position.x
-            t.transform.translation.y = 0.5*np.sin(directions[i])# + pose.position.y
-            t.transform.translation.z = pose.position.z
+            if antenna_x is None:
+                t.transform.translation.x = 0.5*np.cos(directions[i])# + pose.position.x
+            else:
+                t.transform.translation.x = float(antenna_x)
+            if antenna_y is None:
+                t.transform.translation.y = 0.5*np.sin(directions[i])# + pose.position.y
+            else:
+                t.transform.translation.y = float(antenna_y)
+            if antenna_z is None:
+                t.transform.translation.z = pose.position.z
+            else:
+                t.transform.translation.z = float(antenna_z)
             # Set the rotation values
             t.transform.rotation.x = orientation.x
             t.transform.rotation.y = orientation.y

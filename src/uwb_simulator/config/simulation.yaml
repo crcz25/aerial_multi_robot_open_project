@@ -1,37 +1,25 @@
-robots: [
-  "T01",
-  "T02",
-  "tello1",
-  # "tello2",
-]
-
-# uwb_nodes:
-#   T01:
-#     num_antennas: 1
-#     names: [
-#       "A",
-#     ]
-#   T02:
-#     num_antennas: 1
-#     names: [
-#       "A",
-#     ]
-#   tello1:
-#     num_antennas: 1
-#     names: [
-#       "A",
-#     ]
-#   tello2:
-#     num_antennas: 1
-#     names: [
-#       "A",
-#     ]
+robots:
+  - T01:
+      x: 1.0
+      y: 1.5
+  - T02:
+      x: 2.0
+      y: 1.5
+  - tello1:
+      x: 3.0
+      y: 1.5
+  # - T01
+  # - T02
+  # - tello1
 
 uwb_nodes:
   T01:
     num_antennas: 3
     names: [
       "A", "B", "C",
+    ]
+    positions: [
+      [0.5, 0.5, 0], [0.5, 0, 0], [0, 0.5, 0]
     ]
   T02:
     num_antennas: 2
@@ -43,11 +31,9 @@ uwb_nodes:
     names: [
       "A",
     ]
-  # tello2:
-  #   num_antennas: 1
-  #   names: [
-  #     "A",
-  #   ]
+    positions: [
+      [0.4, 0.6, 0]
+    ]
 
 uwb_ranges:
   # ground truth could be all to measure the distance between all the robots antennas or the robot that is supposed to be the ground truth

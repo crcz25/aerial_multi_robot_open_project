@@ -46,9 +46,19 @@ class TfBroadcaster(Node):
         )
 
         # Get parameters from the parameter server
-        if len(sys.argv) > 1:
-            self.robot_name = sys.argv[1]
-            self.get_logger().info(f"robot_name: {self.robot_name}")
+        # if len(sys.argv) > 1:
+        #     self.robot_name = sys.argv[1]
+        #     self.get_logger().info(f"robot_name: {self.robot_name}")
+
+        # Declare the parameters
+        self.declare_parameter('robot_name', rclpy.Parameter.Type.STRING)
+        # Get the parameters
+        robot_name = self.get_parameter_or('robot_name', None)
+        if robot_name:
+            self.robot_name = robot_name.value
+        # Print the parameters
+        self.get_logger().info(f"robot_name: {self.robot_name}")
+
         self.transformation = tf2_ros.TransformStamped()
 
         # Initialize the transform broadcaster
