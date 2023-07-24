@@ -89,27 +89,27 @@ class Plotter(Node):
         self.write_to_file = self.get_parameter_or('write_to_file', False)
         self.localization_method = self.get_parameter_or('localization_method', None)
         # Print the parameters
-        self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
-        self.get_logger().info(f"ground_truth: {self.ground_truth.value}")
-        self.get_logger().info(f"max_freq: {self.max_freq.value}")
-        self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
-        self.get_logger().info(f"mean: {self.mean_noise.value}")
-        self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
-        self.get_logger().info(f"pairs: {self.pairs.value}")
-        self.get_logger().info(f"antennas: {self.antennas_names.value}")
-        self.get_logger().info(f"measurements: {self.measurements.value}")
-        self.get_logger().info(f"distances_to_subscribe: {self.distances_to_subscribe.value}")
-        self.get_logger().info(f"positions_to_subscribe: {self.positions_to_subscribe.value}")
-        self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
-        self.get_logger().info(f"localization_method: {self.localization_method.value}")
+        # self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
+        # self.get_logger().info(f"ground_truth: {self.ground_truth.value}")
+        # self.get_logger().info(f"max_freq: {self.max_freq.value}")
+        # self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
+        # self.get_logger().info(f"mean: {self.mean_noise.value}")
+        # self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
+        # self.get_logger().info(f"pairs: {self.pairs.value}")
+        # self.get_logger().info(f"antennas: {self.antennas_names.value}")
+        # self.get_logger().info(f"measurements: {self.measurements.value}")
+        # self.get_logger().info(f"distances_to_subscribe: {self.distances_to_subscribe.value}")
+        # self.get_logger().info(f"positions_to_subscribe: {self.positions_to_subscribe.value}")
+        # self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
+        # self.get_logger().info(f"localization_method: {self.localization_method.value}")
 
         # Convert the nodes from string to dictionray
         self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
-        self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
+        # self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
 
         # Convert the measurements from string to list
         self.measurements_list = ast.literal_eval(self.measurements.value)
-        self.get_logger().info(f"measurements converted: {self.measurements_list}")
+        # self.get_logger().info(f"measurements converted: {self.measurements_list}")
 
 
         # Generate the list of subscribers for the UWB distances
@@ -167,15 +167,16 @@ class Plotter(Node):
         # Add the antennas names
         for antenna in self.antennas_names.value:
                 self.cols.append(antenna)
-        self.get_logger().info(f"cols: {self.cols}")
+        # self.get_logger().info(f"cols: {self.cols}")
         # Create the dataframe with default values as 0.0
         self.data_df = pd.DataFrame(columns=self.cols)
-        self.get_logger().info(f"data_df:")
-        print(self.data_df)
+        # self.get_logger().info(f"data_df:")
+        # print(self.data_df)
 
         # Create the variables to save the data in a csv file
+        self.now = time.time()
         if self.write_to_file:
-            with open(f'measurements.csv', 'w') as f:
+            with open(f'measurements_{self.now}.csv', 'w') as f:
                 writer = csv.writer(f)
                 cols = []
                 for topic in self.distances_to_subscribe.value:
@@ -219,12 +220,12 @@ class Plotter(Node):
 
     def on_timer(self):
         # Process distance measurements
-        self.get_logger().info(f"\n\nProcessing measurements")
+        # self.get_logger().info(f"\n\nProcessing measurements")
         # self.get_logger().info(f"Ranges:")
         # pprint(self.ranges_)
         # self.get_logger().info(f"Positions:")
         # pprint(self.global_positions_)
-        pprint(self.data_df)
+        # pprint(self.data_df)
         # Process the data only if there is no na value in the dataframe or if the dataframe is not empty
         if not self.data_df.isnull().values.any() and not self.data_df.empty:
             # Construct the list of positions from the ground truth antennas using the dataframe
@@ -240,21 +241,21 @@ class Plotter(Node):
                 # Convert the positions to a numpy array
                 # gt_pos = np.array(gt_pos)
 
-                self.get_logger().info(f"Ranges:")
-                print(ranges_antenna)
-                self.get_logger().info(f"Positions:")
-                print(gt_pos)
+                # self.get_logger().info(f"Ranges:")
+                # print(ranges_antenna)
+                # self.get_logger().info(f"Positions:")
+                # print(gt_pos)
 
                 # Check the localization method
                 if self.localization_method.value == "lse":
                     # Calculate the estimated position
                     estimated_position, err = lse(gt_pos, ranges_antenna)
                     # Print the estimated position
-                    self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
+                    # self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
 
         # Save the data in a csv file
         if self.write_to_file:
-            with open(f'measurements.csv', 'a') as f:
+            with open(f'measurements_{self.now}.csv', 'a') as f:
                 writer = csv.writer(f)
                 # Check if the dataframe is empty
                 if not self.data_df.empty:
@@ -266,7 +267,6 @@ class Plotter(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    print(args)
 
     node = Plotter()
 

@@ -4,6 +4,7 @@ import csv
 import dask.dataframe as dd
 import ast
 import re
+import argparse
 
 from _localization import lse
 
@@ -31,13 +32,19 @@ def process_row(row, uwb_antenna, ranges, anchors):
     return (pos.tolist(), err)
 
 def main():
+    # Get the name of the file from the parameters
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--file', type=str, help='Name of the file to process')
+    args = parser.parse_args()
+    name = args.file
+
     # Read the csv of the measurements
-    data_csv = pd.read_csv('./measurements.csv')
+    data_csv = pd.read_csv(name)
     # Remove all the rows that have a nan value
     data_csv = data_csv.dropna()
     # Reset the index of the dataframe
     data_csv = data_csv.reset_index(drop=True)
-    print(data_csv.head())
+    print(data_csv)
     # Get the columns of the csv
     col_names = data_csv.columns
     print (col_names)
@@ -59,7 +66,7 @@ def main():
     output = pd.DataFrame(columns=uwb_antennas)
     print(1+data_csv.memory_usage(deep=True).sum()//10)
     # ddf_out = dd.from_pandas(data_csv, npartitions=1).repartition(partition_size=f'{1+data_csv.memory_usage(deep=True).sum() // 10}MB')
-    ddf_out = dd.from_pandas(data_csv, npartitions=5)
+    ddf_out = dd.from_pandas(data_csv, npartitions=10)
     print()
 
     # Iterate over the antennas to estimate the position
