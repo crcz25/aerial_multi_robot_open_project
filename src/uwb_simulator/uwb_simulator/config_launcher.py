@@ -35,6 +35,10 @@ class ConfigLaunch:
     def get_uwb_ranges_from_config(self) -> Union[List[str], None]:
         uwb_ranges_names = self.config_dict.get('uwb_ranges', None)
         return uwb_ranges_names
+    
+    def get_trajectory_from_config(self) -> Union[bool, None]:
+        trajectory_name = self.config_dict.get('demo_trajectory', None)
+        return trajectory_name
 
     def extract_robots_config(
             self,

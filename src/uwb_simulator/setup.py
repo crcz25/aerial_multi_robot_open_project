@@ -28,6 +28,7 @@ setup(
             'turtle_tf2_base_rename = uwb_simulator.turtle_tf2_base_rename:main',
             'drone_tf2_base_rename = uwb_simulator.drone_tf2_base_rename:main',
             'drone_tf2_broadcaster = uwb_simulator.drone_tf2_broadcaster:main',
+            'trajectories = uwb_simulator.trajectories:main',
             'plotter = uwb_simulator.plotter:main',
         ],
     },
