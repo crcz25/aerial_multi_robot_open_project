@@ -40,11 +40,13 @@ uwb_ranges:
   ground_truth: "T01"
   type_measurement: "origin"
   localization_method: "lse"
-  write_to_file: true
+  write_to_file: false
   max_twr_freq: 400
   duty_cycle: 1
   mean: 0.0
-  std_dev: 0.1
+  std_dev: 0.2
   ranges: [
     "T02", "tello1",
   ]
+
+demo_trajectory: true
