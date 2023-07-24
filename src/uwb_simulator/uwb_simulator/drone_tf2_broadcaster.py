@@ -84,10 +84,10 @@ class AntennaTfBroadcaster(Node):
         if pos_antennas:
             self.pos_antennas = ast.literal_eval(pos_antennas.value)
         # Print the parameters
-        self.get_logger().info(f"robot_name: {self.robot_name}")
-        self.get_logger().info(f"num_antennas: {self.num_antennas}")
-        self.get_logger().info(f"names_antennas: {self.names_antennas}")
-        self.get_logger().info(f"pos_antennas: {self.pos_antennas}")
+        # self.get_logger().info(f"robot_name: {self.robot_name}")
+        # self.get_logger().info(f"num_antennas: {self.num_antennas}")
+        # self.get_logger().info(f"names_antennas: {self.names_antennas}")
+        # self.get_logger().info(f"pos_antennas: {self.pos_antennas}")
 
         if self.num_antennas:
             self.transformations = [
