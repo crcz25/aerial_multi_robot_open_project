@@ -162,3 +162,7 @@ cython_debug/
 # ROS2
 /install
 /log
+
+# Ignore csv files
+*.csv
+*.npz
