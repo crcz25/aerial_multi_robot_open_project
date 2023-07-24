@@ -89,27 +89,27 @@ class Plotter(Node):
         self.write_to_file = self.get_parameter_or('write_to_file', False)
         self.localization_method = self.get_parameter_or('localization_method', None)
         # Print the parameters
-        self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
-        self.get_logger().info(f"ground_truth: {self.ground_truth.value}")
-        self.get_logger().info(f"max_freq: {self.max_freq.value}")
-        self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
-        self.get_logger().info(f"mean: {self.mean_noise.value}")
-        self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
-        self.get_logger().info(f"pairs: {self.pairs.value}")
-        self.get_logger().info(f"antennas: {self.antennas_names.value}")
-        self.get_logger().info(f"measurements: {self.measurements.value}")
-        self.get_logger().info(f"distances_to_subscribe: {self.distances_to_subscribe.value}")
-        self.get_logger().info(f"positions_to_subscribe: {self.positions_to_subscribe.value}")
-        self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
-        self.get_logger().info(f"localization_method: {self.localization_method.value}")
+        # self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
+        # self.get_logger().info(f"ground_truth: {self.ground_truth.value}")
+        # self.get_logger().info(f"max_freq: {self.max_freq.value}")
+        # self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
+        # self.get_logger().info(f"mean: {self.mean_noise.value}")
+        # self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
+        # self.get_logger().info(f"pairs: {self.pairs.value}")
+        # self.get_logger().info(f"antennas: {self.antennas_names.value}")
+        # self.get_logger().info(f"measurements: {self.measurements.value}")
+        # self.get_logger().info(f"distances_to_subscribe: {self.distances_to_subscribe.value}")
+        # self.get_logger().info(f"positions_to_subscribe: {self.positions_to_subscribe.value}")
+        # self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
+        # self.get_logger().info(f"localization_method: {self.localization_method.value}")
 
         # Convert the nodes from string to dictionray
         self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
-        self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
+        # self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
 
         # Convert the measurements from string to list
         self.measurements_list = ast.literal_eval(self.measurements.value)
-        self.get_logger().info(f"measurements converted: {self.measurements_list}")
+        # self.get_logger().info(f"measurements converted: {self.measurements_list}")
 
 
         # Generate the list of subscribers for the UWB distances
@@ -167,15 +167,16 @@ class Plotter(Node):
         # Add the antennas names
         for antenna in self.antennas_names.value:
                 self.cols.append(antenna)
-        self.get_logger().info(f"cols: {self.cols}")
+        # self.get_logger().info(f"cols: {self.cols}")
         # Create the dataframe with default values as 0.0
         self.data_df = pd.DataFrame(columns=self.cols)
-        self.get_logger().info(f"data_df:")
-        print(self.data_df)
+        # self.get_logger().info(f"data_df:")
+        # print(self.data_df)
 
         # Create the variables to save the data in a csv file
+        self.now = time.time()
         if self.write_to_file:
-            with open(f'measurements.csv', 'w') as f:
+            with open(f'measurements_{self.now}.csv', 'w') as f:
                 writer = csv.writer(f)
                 cols = []
                 for topic in self.distances_to_subscribe.value:
@@ -217,61 +218,16 @@ class Plotter(Node):
         # Return the callback function
         return callback
 
-        # try:
-        #     # Iterate over the antennas to find each transform (global position)
-        #     for idx, antenna in enumerate(self.antennas_names.value):
-        #         # Wait for the transform to be available
-        #         if (self.tf_buffer.can_transform('world', f'{antenna}', rclpy.time.Time())):
-        #             self.get_logger().info(f"Antenna {antenna} found")
-        #             # Get the transform from the antenna to the world
-        #             t = self.tf_buffer.lookup_transform('world', f'{antenna}', rclpy.time.Time())
-        #             # Save the global position of the antenna
-        #             self.global_positions_[idx] = [t.transform.translation.x, t.transform.translation.y, t.transform.translation.z]
-        #         else:
-        #             self.get_logger().info(f"Nel perro")
-        #             # self
-        #         # Print the global position of the antenna
-        #         # self.get_logger().info(f"Antenna {antenna}: {t.transform.translation.x}, {t.transform.translation.y}, {t.transform.translation.z}")
-        #         # self.get_logger().info(f"Antenna {antenna}: {self.global_positions_[idx]}")
-        # except Exception as e:
-        #     self.get_logger().info(f"Exception: {e}")
-        #     # self.get_logger().info(f"Antenna {antenna} not found")
-        #     # self.get_logger().info(f"Antennas: {self.antennas_names.value}")
-        #     # self.get_logger().info(f"Topics: {self.distances_to_subscribe.value}")
-        #     return
-        # return
-
     def on_timer(self):
-        # Publish the ranges of the antennas
-        # msg = FloatDictionary()
-        # # Conver ranges to list of [key, value]
-        # for key, value in self.ranges_.items():
-        #     print(f'key: {key}, value: {value}')
-        #     dis = UwbRange()
-        #     # dis.key = key
-        #     # dis.value = value
-        #     print(dis)
-        #     msg.data.append(dis)
-        # print(msg)
-        # self.publisher_range.publish(msg)
-
-
         # Process distance measurements
-        self.get_logger().info(f"\n\nProcessing measurements")
+        # self.get_logger().info(f"\n\nProcessing measurements")
         # self.get_logger().info(f"Ranges:")
         # pprint(self.ranges_)
         # self.get_logger().info(f"Positions:")
         # pprint(self.global_positions_)
-        pprint(self.data_df)
-
-        # Remove the columns that might have nan values
-        # data_df_no_nan = self.data_df.dropna(axis=1)
-        # pprint(data_df_no_nan)
-
-        # ranges = []
+        # pprint(self.data_df)
         # Process the data only if there is no na value in the dataframe or if the dataframe is not empty
         if not self.data_df.isnull().values.any() and not self.data_df.empty:
-            print("NANANANANANANANANANA")
             # Construct the list of positions from the ground truth antennas using the dataframe
             for antenna in self.rest_antennas:
                 # Get the ranges that contain the antenna in the name of the column _to_antenna
@@ -285,145 +241,21 @@ class Plotter(Node):
                 # Convert the positions to a numpy array
                 # gt_pos = np.array(gt_pos)
 
-                self.get_logger().info(f"Ranges:")
-                print(ranges_antenna)
-                self.get_logger().info(f"Positions:")
-                print(gt_pos)
+                # self.get_logger().info(f"Ranges:")
+                # print(ranges_antenna)
+                # self.get_logger().info(f"Positions:")
+                # print(gt_pos)
 
                 # Check the localization method
                 if self.localization_method.value == "lse":
                     # Calculate the estimated position
                     estimated_position, err = lse(gt_pos, ranges_antenna)
                     # Print the estimated position
-                    self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
-                break
-
-        #     # Save the range in a new row of the array
-        #     ranges.append(ranges_antenna)
-        # # Convert the list to a numpy array and reshape to (1, n_antennas)
-        # ranges = np.array(ranges).reshape(1, -1)
-
-        # # Construct the list of positions from the ground truth antennas
-        # gt_antennas_positions = []
-        # for antenna in self.gt_antennas:
-        #     # Check if the antenna is in the list of ground truth antennas
-        #     if antenna in self.global_positions_.keys():
-        #         pos = self.global_positions_[antenna]
-        #         print(pos)
-        #         # Save the position in a new row of the array
-        #         gt_antennas_positions.append(pos)
-        # # Convert the list to a numpy array
-        # gt_antennas_positions = np.array(gt_antennas_positions)
-        # self.get_logger().info(f"GT antennas positions:")
-        # print(gt_antennas_positions)
-
-        # existing_res = list(set(self.rest_antennas) & set(self.global_positions_.keys()))
-        # print('existing_res')
-        # print(existing_res)
-        # sleep(1)
-
-
-        # Check if the dictionaries of ranges and positions are not empty
-        # if self.ranges_ and self.global_positions_:
-        #     for end in self.rest_antennas:
-        #         ranges = []
-        #         for key in sorted(self.ranges_.keys()):
-        #             print(key)
-        #             if end in key:
-        #                 ranges.append([self.ranges_[key]])
-        #         print(ranges)
-        #         # Convert the ranges to a numpy array
-        #         ranges = np.array(ranges)
-        #         print(ranges)
-        #         # Calculate the estimated position
-        #         if self.localization_method.value == "lse":
-        #             # Calculate the position using LSE
-        #             estimated_position, error = lse(gt_antennas_positions, ranges)
-        #             self.get_logger().info(f"Using LSE")
-        #             print(f"Estimated position: {estimated_position}, error: {error}")
-                
-
-        # Iterate over the pairs of antennas
-        # for origin in self.gt_antennas:
-        #         key = f'from_{origin}_to_{end}'
-        #         # Check if there is a range measurement for the pair of antennas
-        #         if key in self.ranges_.keys():
-        #             print(f"Origin: {origin}, end: {end}, range: {self.ranges_[key]}")
-        
-
-        # # Construct the list of ranges from the ground truth antennas vs the rest of antennas
-        # for rest_antenna in self.rest_antennas:
-        #     for gt_antenna in self.gt_antennas:
-        #         self.get_logger().info(f"Ranges GT vs rest:")
-        #         filtered_dict = {key: value for key, value in self.ranges_.items() if rest_antenna and gt_antenna in key}
-        #         print(filtered_dict)
-        #         print(filtered_dict.values())
-        #         # Convert the ranges to a list
-        #         # Check if the estimated position is valid
-        #         if len(gt_antennas_positions) > 0 and len(filtered_dict) > 0:
-        #             estimated_position = None
-        #             err = None
-        #             # Check the localization method
-        #             if self.localization_method.value == "lse":
-        #                 # Calculate the estimated position
-        #                 estimated_position, err = lse(gt_antennas_positions, filtered_dict.values())
-        #             # Print the estimated position
-        #             self.get_logger().info(f"Estimated position of {rest_antenna}: {estimated_position}, error: {err}")
-
-        # self.get_logger().info(f"GT antennas: {self.gt_antennas}")
-        # self.get_logger().info(f"Rest antennas: {self.rest_antennas}")
-        # print()
-
-        # Save the data in a csv file
-        # if self.write_to_file and len(self.ranges_) > 0 and len(self.global_positions_) > 0:
-        #     with open(f'measurements.csv', 'a') as f:
-        #         writer = csv.writer(f)
-        #         cols = []
-        #         for topic in self.distances_to_subscribe.value:
-        #             cols.append(self.ranges_[topic])
-        #         for antenna in self.antennas_names.value:
-        #             # Check if the antenna has the name of the ground truth robot:
-        #             if antenna.startswith(self.ground_truth.value):
-        #                 # Append GT to the beginning of the name
-        #                 cols.append(self.global_positions_[antenna][0])
-        #                 cols.append(self.global_positions_[antenna][1])
-        #                 cols.append(self.global_positions_[antenna][2])
-        #             else:
-        #                 cols.append(self.global_positions_[antenna][0])
-        #                 cols.append(self.global_positions_[antenna][1])
-        #                 cols.append(self.global_positions_[antenna][2])
-        #         writer.writerow(cols)
-        pass
-
-        # Save a copy of the variables
-        # topcis_idx = self.topcis_idx.copy()
-        # ranges_ = self.ranges_.copy()
-        # global_positions_ = self.global_positions_.copy()
-
-        # Iterate over the antennas ignoring the ground truth
-        # for antenna in self.rest_antennas:
-        #     # self.get_logger().info(f"Antenna: {antenna}")
-        #     # Get the corresponding index of the topic to susbcribe
-        #     topic_idx = self.topcis_idx[antenna]
-        #     # Get the corresponding range
-        #     distances = self.ranges_[topic_idx]
-        #     # print(f"topic_idx: {topic_idx}, Range: {distances}")
-
-        #     # Get all the corresponding positions of the ground truth robot
-        #     gt_pos = np.array([self.global_positions_[idx] for idx in self.gt_idx])
-        #     # print(f"GT position: {gt_pos}")
-
-        #     # Calculate the position using LSE
-        #     if self.localization_method.value == "lse":
-        #         estimated_position, error = lse(gt_pos, distances)
-        #         pass
-                # self.get_logger().info(f"Using LSE")
-                # print(f"Estimated position: {estimated_position}, error: {error}")
-
+                    # self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
 
         # Save the data in a csv file
         if self.write_to_file:
-            with open(f'measurements.csv', 'a') as f:
+            with open(f'measurements_{self.now}.csv', 'a') as f:
                 writer = csv.writer(f)
                 # Check if the dataframe is empty
                 if not self.data_df.empty:
@@ -435,12 +267,8 @@ class Plotter(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    print(args)
 
     node = Plotter()
-
-    # Sleep of 2.5 seconds to wait for the topics to be created
-    # time.sleep(5)
 
     rclpy.spin(node)
 
