@@ -9,7 +9,7 @@ import argparse
 def main():
     # Get the name of the file from the parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--file', type=str, help='Name of the file to process')
+    parser.add_argument('--file', type=str, help='Name of the file to process', default='output.csv')
     args = parser.parse_args()
     name = args.file
 
