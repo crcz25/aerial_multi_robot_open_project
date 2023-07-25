@@ -74,7 +74,6 @@ class Plotter(Node):
         self.declare_parameter('positions_to_subscribe', rclpy.Parameter.Type.STRING_ARRAY)
         self.declare_parameter('write_to_file', rclpy.Parameter.Type.BOOL)
         self.declare_parameter('localization_method', rclpy.Parameter.Type.STRING)
-        self.declare_parameter('all_robots_names', rclpy.Parameter.Type.STRING_ARRAY)
         # Get the parameters
         self.nodes_config = self.get_parameter_or('nodes_config', None)
         self.ground_truth = self.get_parameter_or('ground_truth', None)
@@ -89,7 +88,6 @@ class Plotter(Node):
         self.positions_to_subscribe = self.get_parameter_or('positions_to_subscribe', None)
         self.write_to_file = self.get_parameter_or('write_to_file', False)
         self.localization_method = self.get_parameter_or('localization_method', None)
-        self.all_robots_names = self.get_parameter_or('all_robots_names', None)
         # Print the parameters
         # self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
         # self.get_logger().info(f"ground_truth: {self.ground_truth.value}")
@@ -105,7 +103,6 @@ class Plotter(Node):
         # self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
         # self.get_logger().info(f"type(write_to_file): {type(self.write_to_file.value)}")
         # self.get_logger().info(f"localization_method: {self.localization_method.value}")
-        self.get_logger().info(f"all_robots_name: {self.all_robots_names.value}")
 
         # Convert the nodes from string to dictionray
         self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
