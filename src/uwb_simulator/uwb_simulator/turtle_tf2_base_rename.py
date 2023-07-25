@@ -54,7 +54,7 @@ class TfBroadcaster(Node):
         if robot_name:
             self.robot_name = robot_name.value
         # Print the parameters
-        self.get_logger().info(f"robot_name: {self.robot_name}")
+        # self.get_logger().info(f"robot_name: {self.robot_name}")
 
         self.transformation = tf2_ros.TransformStamped()
 
@@ -100,7 +100,6 @@ class TfBroadcaster(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    print(args)
 
     node = TfBroadcaster()
 

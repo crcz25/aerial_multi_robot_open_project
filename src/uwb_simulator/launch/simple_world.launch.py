@@ -85,6 +85,7 @@ def generate_launch_description():
     robots_names_conf, robots_pos_conf = config_launch.get_robots_from_config()
     uwb_nodes_info = config_launch.get_uwb_nodes_from_config()
     uwb_ranges_in_config = config_launch.get_uwb_ranges_from_config()
+    demo_trajectory = config_launch.get_trajectory_from_config()
 
     # Get UWB Nodes config dictionary
     uwb_nodes_in_config = uwb_nodes_info[0]
@@ -326,6 +327,22 @@ def generate_launch_description():
         }],
     )
     launch_description.add_action(plotter)
+
+    # If the trajectory parameter is set, add the trajectory publisher
+    # print('TRAJECTORY: ', demo_trajectory)
+    # print('Type', type(demo_trajectory))
+    if demo_trajectory:
+        print('Adding trajectory publisher')
+        trajectory_publisher = Node(
+            package='uwb_simulator',
+            executable='trajectories',
+            output='screen',
+            emulate_tty=True,
+            parameters=[{
+                'nodes_config': str(uwb_nodes_in_config), # uwb_nodes_in_config
+            }],
+        )
+        launch_description.add_action(trajectory_publisher)
 
 
     return launch_description

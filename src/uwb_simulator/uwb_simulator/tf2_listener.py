@@ -74,24 +74,24 @@ class FrameListener(Node):
         self.measurements = self.get_parameter_or('measurements', None)
         self.topics_to_publish = self.get_parameter_or('topics_to_publish', None)
         # Print the parameters
-        self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
-        self.get_logger().info(f"robot_name: {self.ground_truth.value}")
-        self.get_logger().info(f"max_freq: {self.max_freq.value}")
-        self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
-        self.get_logger().info(f"mean: {self.mean_noise.value}")
-        self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
-        self.get_logger().info(f"pairs: {self.pairs.value}")
-        self.get_logger().info(f"antennas: {self.antennas_names.value}")
-        self.get_logger().info(f"measurements: {self.measurements.value}")
-        self.get_logger().info(f"topics_to_publish: {self.topics_to_publish.value}")
+        # self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
+        # self.get_logger().info(f"robot_name: {self.ground_truth.value}")
+        # self.get_logger().info(f"max_freq: {self.max_freq.value}")
+        # self.get_logger().info(f"duty_cycle: {self.duty_cycle.value}")
+        # self.get_logger().info(f"mean: {self.mean_noise.value}")
+        # self.get_logger().info(f"std_dev: {self.std_dev_noise.value}")
+        # self.get_logger().info(f"pairs: {self.pairs.value}")
+        # self.get_logger().info(f"antennas: {self.antennas_names.value}")
+        # self.get_logger().info(f"measurements: {self.measurements.value}")
+        # self.get_logger().info(f"topics_to_publish: {self.topics_to_publish.value}")
 
         # Convert the nodes from string to dictionray
         self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
-        self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
+        # self.get_logger().info(f"nodes_config converted: {self.nodes_config.value}")
 
         # Convert the measurements from string to list
         self.measurements_list = ast.literal_eval(self.measurements.value)
-        self.get_logger().info(f"measurements converted: {self.measurements_list}")
+        # self.get_logger().info(f"measurements converted: {self.measurements_list}")
 
         # Check if the pairs are all in the nodes config
         for pair in self.pairs.value:
@@ -182,7 +182,6 @@ class FrameListener(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-    print(args)
 
     node = FrameListener()
 

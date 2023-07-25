@@ -163,5 +163,6 @@ cython_debug/
 /install
 /log
 
-# Simulator outputs
-measurements_*
+# Ignore csv files
+*.csv
+*.npz

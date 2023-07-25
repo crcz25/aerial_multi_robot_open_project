@@ -101,6 +101,7 @@ class Plotter(Node):
         # self.get_logger().info(f"distances_to_subscribe: {self.distances_to_subscribe.value}")
         # self.get_logger().info(f"positions_to_subscribe: {self.positions_to_subscribe.value}")
         # self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
+        # self.get_logger().info(f"type(write_to_file): {type(self.write_to_file.value)}")
         # self.get_logger().info(f"localization_method: {self.localization_method.value}")
 
         # Convert the nodes from string to dictionray
@@ -175,7 +176,8 @@ class Plotter(Node):
 
         # Create the variables to save the data in a csv file
         self.now = time.time()
-        if self.write_to_file:
+        if self.write_to_file.value:
+            # self.get_logger().info(f"Creating csv file")
             with open(f'measurements_{self.now}.csv', 'w') as f:
                 writer = csv.writer(f)
                 cols = []
@@ -254,7 +256,7 @@ class Plotter(Node):
                     # self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
 
         # Save the data in a csv file
-        if self.write_to_file:
+        if self.write_to_file.value:
             with open(f'measurements_{self.now}.csv', 'a') as f:
                 writer = csv.writer(f)
                 # Check if the dataframe is empty
