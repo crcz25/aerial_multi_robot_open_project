@@ -49,4 +49,4 @@ uwb_ranges:
     "T02", "tello1",
   ]
 
-demo_trajectory: true
+demo_trajectory: True

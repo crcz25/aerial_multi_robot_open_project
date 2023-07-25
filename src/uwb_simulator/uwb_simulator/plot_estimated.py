@@ -41,7 +41,7 @@ def main():
         pos_x = [p[0] for p in pos]
         pox_y = [p[1] for p in pos]
         # Plot the real position
-        sns.scatterplot(x=pos_x, y=pox_y, ax=ax, label=antenna)
+        sns.scatterplot(x=pos_x, y=pox_y, ax=ax, label=antenna, marker='o', color='black')
         # break
     plt.show()
 

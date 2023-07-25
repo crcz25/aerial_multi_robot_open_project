@@ -329,8 +329,8 @@ def generate_launch_description():
     launch_description.add_action(plotter)
 
     # If the trajectory parameter is set, add the trajectory publisher
-    print('TRAJECTORY: ', demo_trajectory)
-    print('Type', type(demo_trajectory))
+    # print('TRAJECTORY: ', demo_trajectory)
+    # print('Type', type(demo_trajectory))
     if demo_trajectory:
         print('Adding trajectory publisher')
         trajectory_publisher = Node(

@@ -91,7 +91,7 @@ class RobotTrajectory(Node):
         self.turtlebots = list(filter(reg.match, self.nodes_config_dict.keys()))
 
         # Create the timer
-        self.create_timer(0.2, self.main_node)
+        self.create_timer(0.1, self.main_node)
         # Trajectories
         self.start = [True] * len(self.nodes_config_dict.keys())
         self.trajectory_odom = []
@@ -122,15 +122,10 @@ class RobotTrajectory(Node):
         # Return the callback function
         return callback
 
-    def f(self, r, theta, center):
+    def polar_to_cartesian(self, r, theta, center):
         x = r * np.cos(theta) + center[0]
         y = r * np.sin(theta) + center[1]
         return x, y
-    
-    def coordinates_to_polar(self, x, y):
-        r = np.sqrt(x**2 + y**2)
-        theta = np.arctan2(y, x)
-        return r, theta
 
     def send_request(self, cmd):
         self.get_logger().info('Sending request {}'.format(cmd))
@@ -138,7 +133,7 @@ class RobotTrajectory(Node):
         self.future = self.cli.call_async(self.req)
 
     def move_drone(self, drone, topic, idx):
-        self.get_logger().info(f"Moving drone")
+        # self.get_logger().info(f"Moving drone")
 
         # Save the center on the first iteration
         if self.start[idx]:
@@ -156,14 +151,14 @@ class RobotTrajectory(Node):
         # Calculate the new theta
         new_theta = 0
         if abs(distance) >  0.2 :
-            self.get_logger().info('Out of range, moving to the new center (radius)')
+            # self.get_logger().info('Out of range, moving to the new center (radius)')
             new_theta = self.odom_data[topic]['theta']
         else:
-            self.get_logger().info('In range, moving in a circle')
+            # self.get_logger().info('In range, moving in a circle')
             new_theta = self.odom_data[topic]['theta'] + self.delta_theta
 
         # Calculate X, Y of the new position
-        x_obj, y_obj = self.f(self.radius, new_theta, center_pos)
+        x_obj, y_obj = self.polar_to_cartesian(self.radius, new_theta, center_pos)
         obj = np.array([x_obj, y_obj])
         dir_x, dir_y = (obj - drone_pos) / np.linalg.norm(obj - drone_pos)
 
@@ -180,12 +175,28 @@ class RobotTrajectory(Node):
         # print(f"old theta: {self.odom_data[topic]['theta']}, new theta: {new_theta}")
         return
 
-    def move_turtlebot(self, topic, idx):
-        self.get_logger().info(f"Moving turtlebot")
-        pass
+    def move_turtlebot(self, turtle, topic, idx):
+        # self.get_logger().info(f"Moving turtlebot")
+        # Save the center on the first iteration
+        if self.start[idx]:
+            center = self.odom_data[topic]['pos']
+            self.center[idx] = center
+            self.start[idx] = False
+
+        # Get current position
+        turtle_pos = np.array([self.odom_data[topic]['pos'].x, self.odom_data[topic]['pos'].y])
+        # Get the center
+        center_pos = np.array([self.center[idx].x, self.center[idx].y])
+
+        # Publish the twist
+        self.publisher_twists[turtle].publish(self.destination_twist)
+
+        # self.get_logger().info(f"Center: {center_pos}")
+        # self.get_logger().info(f"Position: {turtle_pos}")
+        return
 
     def move_robots(self):
-        self.get_logger().info(f"Moving robots")
+        # self.get_logger().info(f"Moving robots")
         # Iterate over the list of robots
         for idx, (robot, center) in enumerate(zip(self.nodes_config_dict.keys(), self.center)):
             topic = f'{robot}/odom'
@@ -195,7 +206,7 @@ class RobotTrajectory(Node):
                 if robot in self.drones:
                     self.move_drone(robot, topic, idx)
                 elif robot in self.turtlebots:
-                    self.move_turtlebot(topic, idx)
+                    self.move_turtlebot(robot, topic, idx)
 
         return
 
