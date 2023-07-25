@@ -43,6 +43,7 @@ UWB Simulator
     - "origin": the distances or ranges between all the antennas and the ground truth are computed (but not between the antennas that are not ground truth)
   - localization_method: Determines the method to compute the absolute or relative positions of the robot based on the ranges measured in the simulator. These estimated positions are saved in a external file.
     - "lse": Uses a least squares error estimator to compute the absolute positions of the robots.
+    - "trilat": Uses trilateration to compute the relative positions of the robots.
     - Any other string: Disables this option and no estimation is done.
   - write_to_file: A flag that allows writing a file containing key information from the simulator. It includes the ranges as columns, absolute positions (or real positions) as well as estimated positions if the a method is selected
   - max_twr_freq: Frequency at which the simulator computes the ranges for each pair of antennas (every X Hz a new measurement is computed and published)
