@@ -6,7 +6,7 @@ import ast
 import re
 import argparse
 
-from _localization import lse
+from _localization import lse, mlt_tri_from_measurements_table
 
 def process_row(row, uwb_antenna, ranges, anchors):
     # print(f'Estimating position... ')
@@ -31,12 +31,41 @@ def process_row(row, uwb_antenna, ranges, anchors):
 
     return (pos.tolist(), err)
 
+def process_for_mlt(
+        measurements_table_df: pd.DataFrame,
+        measurements_cols_names,
+        anchors,
+        uwb_antennas,
+        ranges,
+):
+    measurements_table_narray = measurements_table_df.to_numpy()
+
+    n_ranges = len(ranges)
+    measurements_table_narray = measurements_table_narray[:, :n_ranges]
+
+    positions_from_measurements = mlt_tri_from_measurements_table(
+        measurements_table=measurements_table_narray,
+        measurements_cols_names=measurements_cols_names,
+        origin_antenna_1='T01_A',
+        origin_antenna_2='T02_A',
+        all_antennas=anchors + uwb_antennas
+    )
+
+    return positions_from_measurements
+
 def main():
     # Get the name of the file from the parameters
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', type=str, help='Name of the file to process')
+    parser.add_argument(
+        '--method',
+        type=str,
+        help='Type of the method to process the data',
+        default='lse'
+    )
     args = parser.parse_args()
     name = args.file
+    method = args.method
 
     # Read the csv of the measurements
     data_csv = pd.read_csv(name)
@@ -53,8 +82,10 @@ def main():
     print(ranges)
     # Match the columns with the ones that start with GT_
     anchors = [col for col in col_names if col.startswith('GT_')]
+    anchors_antennas = [anchor[3:] for anchor in anchors]
     # Convert string of positions to list of floats
     print(anchors)
+    print(anchors_antennas)
     # Match the rest of the columns that are the uwb antennas not in the ground truth and not the ranges
     uwb_antennas = [col for col in col_names if col not in ranges and col not in anchors]
     # Convert string of positions to list of floats
@@ -62,29 +93,41 @@ def main():
     # Remove the las two characters of the names of the antennas and apply unique to get the names of the robots
     robots = np.unique([antenna[:-2] for antenna in uwb_antennas])
     print(robots)
-    # Define the structure of the output file
-    output = pd.DataFrame(columns=uwb_antennas)
-    print(1+data_csv.memory_usage(deep=True).sum()//10)
-    # ddf_out = dd.from_pandas(data_csv, npartitions=1).repartition(partition_size=f'{1+data_csv.memory_usage(deep=True).sum() // 10}MB')
-    ddf_out = dd.from_pandas(data_csv, npartitions=10)
-    print()
 
-    # Iterate over the antennas to estimate the position
-    for uwb_antenna in uwb_antennas:
-        print(f'Estimating position for antenna {uwb_antenna}...')
-        # Calculate the relative position of the antenna
-        # output[uwb_antenna] = data_csv.apply(process_row, args=(uwb_antenna, ranges, anchors, output, ), axis=1)
-        ddf_res = ddf_out.apply(process_row, args=(uwb_antenna, ranges, anchors, ), axis=1, meta=pd.Series(dtype='object'))
-        # print(ddf_res)
-        # Save the estimated position into the output dataframe
-        output[uwb_antenna] = ddf_res
-    # Add the positions of the anchors to the output dataframe
-    for anchor in anchors:
-        output[anchor] = data_csv[anchor]
-    # Save the output dataframe to a csv file
-    output.to_csv('output.csv', index=False)
+    if method == 'trilateration':
+        #### COMPUTE POSITIONS WITH TRILATERATION #####
+        print(f'Estimating position using Trilateration...')
+        process_for_mlt(
+            measurements_table_df=data_csv,
+            measurements_cols_names=col_names.to_list(),
+            anchors=anchors_antennas,
+            uwb_antennas=uwb_antennas,
+            ranges=ranges
+        )
 
-    pass
+    elif method == 'lse':    
+        # Define the structure of the output file
+        output = pd.DataFrame(columns=uwb_antennas)
+        print(1+data_csv.memory_usage(deep=True).sum()//10)
+        # ddf_out = dd.from_pandas(data_csv, npartitions=1).repartition(partition_size=f'{1+data_csv.memory_usage(deep=True).sum() // 10}MB')
+        ddf_out = dd.from_pandas(data_csv, npartitions=10)
+        print()
+
+        # Iterate over the antennas to estimate the position
+        for uwb_antenna in uwb_antennas:
+            print(f'Estimating position for antenna {uwb_antenna}...')
+            # Calculate the relative position of the antenna
+            # output[uwb_antenna] = data_csv.apply(process_row, args=(uwb_antenna, ranges, anchors, output, ), axis=1)
+            ddf_res = ddf_out.apply(process_row, args=(uwb_antenna, ranges, anchors, ), axis=1, meta=pd.Series(dtype='object'))
+            # print(ddf_res)
+            # Save the estimated position into the output dataframe
+            output[uwb_antenna] = ddf_res
+        # Add the positions of the anchors to the output dataframe
+        for anchor in anchors:
+            output[anchor] = data_csv[anchor]
+        # Save the output dataframe to a csv file
+        output.to_csv('output.csv', index=False)
+
 
 if __name__ == "__main__":
     main()
