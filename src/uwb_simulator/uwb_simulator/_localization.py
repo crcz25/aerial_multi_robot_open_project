@@ -37,7 +37,7 @@ def mlt_tri_from_measurements_table(
         origin_antenna_1: str,
         origin_antenna_2: str,
         all_antennas: List[str],
-) -> np.ndarray:
+) -> List[np.ndarray]:
     """
     - measurements table -> a table that contains the ranges measurements for
     all the possible node pairs in the simulator. Where each row is a moment
@@ -62,6 +62,7 @@ def mlt_tri_from_measurements_table(
     all_antennas_idxs = [*range(len(all_antennas))]
 
     all_transformed_positions_all_times = []
+    all_sided_positions_all_times = []
     
     for measurements_curr_time in measurements_table:
 
@@ -83,7 +84,7 @@ def mlt_tri_from_measurements_table(
             remaining_antennas_idxs = []
             for idx, antenna in enumerate(all_antennas):
                 if (
-                    (antenna != antenna_as_curr_base_1) or
+                    (antenna != antenna_as_curr_base_1) and
                     (antenna != antenna_as_curr_base_2)
                 ):
                     remaining_antennas.append(antenna)
@@ -115,9 +116,17 @@ def mlt_tri_from_measurements_table(
         )
 
         all_transformed_positions_all_times.append(trf_positions_for_pair_comb)
-        print(trf_positions_for_pair_comb)
-    
-    print(all_transformed_positions_all_times)
+
+        sided_positions_for_pair_comb = manage_side(
+            transformed_positions=trf_positions_for_pair_comb
+        )
+        all_sided_positions_all_times.append(sided_positions_for_pair_comb)
+        # print(sided_positions_for_pair_comb)
+
+    print('>-------- All sided positions final --------<')
+    print(all_sided_positions_all_times)
+
+    return all_sided_positions_all_times
 
 
 def mlt_tri_compute_position_from_two_bases(
@@ -145,7 +154,7 @@ def mlt_tri_compute_position_from_two_bases(
         [0, 0, ant_base_1_idx, ant_base_1_idx, ant_base_2_idx]
     )
     positions[ant_base_2_idx] = np.array(
-        [dist_btwn_bases, 0, ant_base_1_idx, ant_base_1_idx, ant_base_2_idx]
+        [dist_btwn_bases, 0, ant_base_2_idx, ant_base_1_idx, ant_base_2_idx]
     )
 
     for antenna, antenna_idx in zip(
@@ -163,7 +172,6 @@ def mlt_tri_compute_position_from_two_bases(
             measurements_cols_names=measurements_cols_names,
             measurements_curr_time=measurements_curr_time
         )
-        
         cos_theta = (
             dist_btwn_bases ** 2 + dist_base_1_to_antenna ** 2 - dist_base_2_to_antenna ** 2
         ) / (2 * dist_btwn_bases * dist_base_1_to_antenna)
@@ -212,8 +220,8 @@ def transform_all_positions(
         pos_origin_ant_2 = positions_from_pair[pos_origin_ant_2_idx]
         # Compute the angle between the two origin antennas
         angle_btwn_ant1_ant2 = math.atan2(
-            pos_origin_ant_2[1] - pos_origin_ant_1[1],
-            pos_origin_ant_2[0] - pos_origin_ant_1[0],
+            pos_origin_ant_1[1] - pos_origin_ant_2[1],
+            pos_origin_ant_1[0] - pos_origin_ant_2[0],
         ) + math.pi
 
         for ant_pos_idx, ant_position in enumerate(positions_from_pair):
@@ -250,19 +258,19 @@ def get_distance_btwn_antennas_from_measurements(
         """
         try:
             col_idx_distance_btwn_antennas = measurements_cols_names.index(
-                f'from_{antenna_1_name}_to_{antenna_2_name}'
+                f'from_{antenna_1_name}_to_{antenna_2_name}_range'
             )
             dist_btwn_antennas = measurements_curr_time[
                 col_idx_distance_btwn_antennas
-            ].item()
+            ]
         except ValueError:
             try:
                 col_idx_distance_btwn_antennas = measurements_cols_names.index(
-                    f'from_{antenna_2_name}_to_{antenna_1_name}'
+                    f'from_{antenna_2_name}_to_{antenna_1_name}_range'
                 )
                 dist_btwn_antennas = measurements_curr_time[
                     col_idx_distance_btwn_antennas
-                ].item()
+                ]
             except ValueError:
                 raise ValueError(
                     f'Distance between antenna {antenna_1_name} and '
@@ -276,3 +284,23 @@ def rotate(point, origin, angle):
     qx = ox + math.cos(angle) * (px - ox) + math.sin(angle) * (py - oy)
     qy = oy + math.sin(angle) * (ox - px) + math.cos(angle) * (py - oy)
     return qx, qy
+
+def manage_side(transformed_positions):
+    """Positive or negative side based on the majority of the points"""
+    all_sided_positions = []
+
+    for positions_from_pair in transformed_positions:
+        sided_positions = np.zeros_like(positions_from_pair)
+
+        for ant_idx, ant_position in enumerate(positions_from_pair):
+            sided_positions[ant_idx] = ant_position
+
+            if ant_position[1] > 0:
+                all_sided_positions.append(sided_positions)
+            else:
+                sided_positions[ant_idx][1] = -1 * ant_position[1]
+                all_sided_positions.append(sided_positions)
+    
+    return all_sided_positions
+
+
