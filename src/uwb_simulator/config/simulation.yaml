@@ -64,7 +64,7 @@ uwb_ranges:
   # ground truth could be all to measure the distance between all the robots antennas or the robot that is supposed to be the ground truth
   ground_truth: "T01"
   type_measurement: "all"
-  localization_method: "none"
+  localization_method: "trilat"
   write_to_file: true
   max_twr_freq: 100
   duty_cycle: 1
