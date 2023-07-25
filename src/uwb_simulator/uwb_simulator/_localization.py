@@ -37,6 +37,7 @@ def mlt_tri_from_measurements_table(
         origin_antenna_1: str,
         origin_antenna_2: str,
         all_antennas: List[str],
+        range_suffix: str
 ) -> List[np.ndarray]:
     """
     - measurements table -> a table that contains the ranges measurements for
@@ -104,7 +105,8 @@ def mlt_tri_from_measurements_table(
                 remaining_antennas=remaining_antennas,
                 remaining_antennas_idxs=remaining_antennas_idxs,
                 measurements_curr_time=measurements_curr_time,
-                measurements_cols_names=measurements_cols_names
+                measurements_cols_names=measurements_cols_names,
+                range_suffix=range_suffix
             )
 
             positions_for_each_pair_comb.append(positions_curr_bases)
@@ -141,6 +143,7 @@ def mlt_tri_compute_position_from_two_bases(
         remaining_antennas_idxs: List[int],
         measurements_curr_time: np.ndarray,
         measurements_cols_names: List[str],
+        range_suffix: str
 ) -> np.ndarray:
     positions = np.zeros((n_antennas, 5))
 
@@ -148,7 +151,8 @@ def mlt_tri_compute_position_from_two_bases(
         antenna_1_name=antenna_base_1,
         antenna_2_name=antenna_base_2,
         measurements_cols_names=measurements_cols_names,
-        measurements_curr_time=measurements_curr_time
+        measurements_curr_time=measurements_curr_time,
+        suffix=range_suffix,
     )
 
     # Positions of the base antennas
@@ -166,13 +170,15 @@ def mlt_tri_compute_position_from_two_bases(
             antenna_1_name=antenna_base_1,
             antenna_2_name=antenna,
             measurements_cols_names=measurements_cols_names,
-            measurements_curr_time=measurements_curr_time
+            measurements_curr_time=measurements_curr_time,
+            suffix=range_suffix,
         )
         dist_base_2_to_antenna = get_distance_btwn_antennas_from_measurements(
             antenna_1_name=antenna_base_2,
             antenna_2_name=antenna,
             measurements_cols_names=measurements_cols_names,
-            measurements_curr_time=measurements_curr_time
+            measurements_curr_time=measurements_curr_time,
+            suffix=range_suffix,
         )
         cos_theta = (
             dist_btwn_bases ** 2 + dist_base_1_to_antenna ** 2 - dist_base_2_to_antenna ** 2
@@ -250,6 +256,7 @@ def get_distance_btwn_antennas_from_measurements(
         antenna_2_name: str,
         measurements_cols_names: List[str],
         measurements_curr_time: np.ndarray,
+        suffix='_range',
     ):
         """
         Returns the distance between two antennas given their names. The value
@@ -258,7 +265,7 @@ def get_distance_btwn_antennas_from_measurements(
         """
         try:
             col_idx_distance_btwn_antennas = measurements_cols_names.index(
-                f'from_{antenna_1_name}_to_{antenna_2_name}_range'
+                f'from_{antenna_1_name}_to_{antenna_2_name}{suffix}'
             )
             dist_btwn_antennas = measurements_curr_time[
                 col_idx_distance_btwn_antennas
@@ -266,7 +273,7 @@ def get_distance_btwn_antennas_from_measurements(
         except ValueError:
             try:
                 col_idx_distance_btwn_antennas = measurements_cols_names.index(
-                    f'from_{antenna_2_name}_to_{antenna_1_name}_range'
+                    f'from_{antenna_2_name}_to_{antenna_1_name}{suffix}'
                 )
                 dist_btwn_antennas = measurements_curr_time[
                     col_idx_distance_btwn_antennas
