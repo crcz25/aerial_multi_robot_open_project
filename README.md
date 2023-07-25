@@ -15,7 +15,26 @@ UWB Simulator
 ## Parameters to configure when launching the application:
 
 - robots: They can be a list of names, or a list of each robot describing their position (see example).
-- uwb_nodes: They define the same list of names as in the robots list, but they also define for each robot the number of antennas and the names that they will be asigned. Adding the position of each antenna (relative to the center of the robot) is optional.
+  - Option 1:
+  -     - T01:
+          x: 1.0
+          y: 1.5
+        - T02:
+          x: 2.0
+          y: 1.5
+  - Option 2:
+  -     - T01
+        - T02
+- uwb_nodes: They define the same list of names as in the robots list, but they also define for each robot the number of antennas and the names that they will be asigned. Adding the position of each antenna (relative to the center of the robot) is optional. It is mandatory to include the information for all the robots declared in the **robots** section.
+  - Example:   
+  -     T01:
+          num_antennas: 1
+          names: [
+            "A",
+          ]
+          positions: [
+            [0.5, 0.5, 0],
+          ]
 - uwb_ranges: They configure how to measure the ranges between the antennas.
 
   - ground_truth: Name of the robot that will be used as ground truth. Meaning that all the other antennas will measure their distance against this robot but not between themselves. **This only applies if type_measurement is set to _origin_**
