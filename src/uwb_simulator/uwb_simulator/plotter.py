@@ -14,7 +14,7 @@ import numpy as np
 import csv
 import time
 import pandas as pd
-from ._localization import lse
+from ._localization import lse, mlt_tri_from_measurements_table
 from pprint import pprint
 from time import sleep
 
@@ -74,6 +74,7 @@ class Plotter(Node):
         self.declare_parameter('positions_to_subscribe', rclpy.Parameter.Type.STRING_ARRAY)
         self.declare_parameter('write_to_file', rclpy.Parameter.Type.BOOL)
         self.declare_parameter('localization_method', rclpy.Parameter.Type.STRING)
+        self.declare_parameter('all_robots_names', rclpy.Parameter.Type.STRING_ARRAY)
         # Get the parameters
         self.nodes_config = self.get_parameter_or('nodes_config', None)
         self.ground_truth = self.get_parameter_or('ground_truth', None)
@@ -88,6 +89,7 @@ class Plotter(Node):
         self.positions_to_subscribe = self.get_parameter_or('positions_to_subscribe', None)
         self.write_to_file = self.get_parameter_or('write_to_file', False)
         self.localization_method = self.get_parameter_or('localization_method', None)
+        self.all_robots_names = self.get_parameter_or('all_robots_names', None)
         # Print the parameters
         # self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
         # self.get_logger().info(f"ground_truth: {self.ground_truth.value}")
@@ -103,6 +105,7 @@ class Plotter(Node):
         # self.get_logger().info(f"write_to_file: {self.write_to_file.value}")
         # self.get_logger().info(f"type(write_to_file): {type(self.write_to_file.value)}")
         # self.get_logger().info(f"localization_method: {self.localization_method.value}")
+        self.get_logger().info(f"all_robots_name: {self.all_robots_names.value}")
 
         # Convert the nodes from string to dictionray
         self.nodes_config_dict = ast.literal_eval(self.nodes_config.value)
@@ -228,6 +231,7 @@ class Plotter(Node):
         # self.get_logger().info(f"Positions:")
         # pprint(self.global_positions_)
         # pprint(self.data_df)
+
         # Process the data only if there is no na value in the dataframe or if the dataframe is not empty
         if not self.data_df.isnull().values.any() and not self.data_df.empty:
             # Construct the list of positions from the ground truth antennas using the dataframe
@@ -254,6 +258,20 @@ class Plotter(Node):
                     estimated_position, err = lse(gt_pos, ranges_antenna)
                     # Print the estimated position
                     # self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
+            if self.localization_method.value == "trilat":
+                n_ranges = len(self.distances_to_subscribe.value)
+
+                measurements_table = self.data_df.to_numpy()[:, :n_ranges]
+                measurements_cols = self.data_df.columns.to_list()[:n_ranges]
+
+                estimated_positions = mlt_tri_from_measurements_table(
+                    measurements_table=measurements_table,
+                    measurements_cols_names=measurements_cols,
+                    origin_antenna_1=self.antennas_names.value[0],
+                    origin_antenna_2=self.antennas_names.value[1],
+                    all_antennas=self.antennas_names.value,
+                    range_suffix=''
+                )
 
         # Save the data in a csv file
         if self.write_to_file.value:
