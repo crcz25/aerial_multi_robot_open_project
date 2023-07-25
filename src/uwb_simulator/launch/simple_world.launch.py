@@ -324,6 +324,7 @@ def generate_launch_description():
             'positions_to_subscribe': topics_global_positions, # Names of the topics to publish
             'write_to_file': uwb_ranges_in_config['write_to_file'], # write_to_file
             'localization_method': uwb_ranges_in_config['localization_method'], # location_method
+            'all_robots_names': robots_names_conf,
         }],
     )
     launch_description.add_action(plotter)
