@@ -45,6 +45,9 @@ def mlt_tri_from_measurements_table(
     - measurements_cols_names -> the names of the columns in the same order
     that are in the table (maybe if it comes in the same file then this is not
     necessary?)
+    - origin_antenna_1 -> Name of the antenna that will be used as origin 0, 0
+    - origin_antenna_2 -> Name of the antenna that will serve as reference
+    to define the origin at origin_antenna_1.
     - all_antennas -> a list with all the antennas names available in the
     simulator (not necessary if we pass all the possible pairs)
 
@@ -121,7 +124,6 @@ def mlt_tri_from_measurements_table(
             transformed_positions=trf_positions_for_pair_comb
         )
         all_sided_positions_all_times.append(sided_positions_for_pair_comb)
-        # print(sided_positions_for_pair_comb)
 
     print('>-------- All sided positions final --------<')
     print(all_sided_positions_all_times)
@@ -218,6 +220,7 @@ def transform_all_positions(
         pos_origin_ant_1 = positions_from_pair[pos_origin_ant_1_idx]
         pos_origin_ant_2_idx = all_antennas.index(origin_antenna_2)
         pos_origin_ant_2 = positions_from_pair[pos_origin_ant_2_idx]
+
         # Compute the angle between the two origin antennas
         angle_btwn_ant1_ant2 = math.atan2(
             pos_origin_ant_1[1] - pos_origin_ant_2[1],
@@ -241,9 +244,6 @@ def transform_all_positions(
         all_transformed_positions.append(transformed_positions)
     
     return all_transformed_positions
-
-
-
 
 def get_distance_btwn_antennas_from_measurements(
         antenna_1_name: str,
