@@ -8,12 +8,12 @@ robots:
   # - T03:
   #     x: 4.0
   #     y: 1.5
-  # - tello1:
-  #     x: 1.5
-  #     y: 4.0
-  # - tello2:
-  #     x: 3
-  #     y: 2.5
+  - tello1:
+      x: 1.5
+      y: 8.0
+  - tello2:
+      x: 3
+      y: 4.0
   # - T01
   # - T02
   # - tello1
@@ -22,18 +22,18 @@ uwb_nodes:
   T01:
     num_antennas: 1
     names: [
-      "A",
+      "A"
     ]
     positions: [
-      [0.5, 0.5, 0],
+      [0.5, 0.5, 0]
     ]
   T02:
     num_antennas: 1
     names: [
-      "A",
+      "A"
     ]
     positions: [
-      [0.5, 0.5, 0],
+      [0.5, 0.5, 0]
     ]
   # T03:
   #   num_antennas: 1
@@ -43,34 +43,34 @@ uwb_nodes:
   #   positions: [
   #     [0.5, 0.5, 0],
   #   ]
-  # tello1:
-  #   num_antennas: 1
-  #   names: [
-  #     "A",
-  #   ]
-  #   positions: [
-  #     [0.5, 0.5, 0]
-  #   ]
-  # tello2:
-  #   num_antennas: 1
-  #   names: [
-  #     "A",
-  #   ]
-  #   positions: [
-  #     [0.5, 0.5, 0]
-  #   ]
+  tello1:
+    num_antennas: 1
+    names: [
+      "A"
+    ]
+    positions: [
+      [0.5, 0.5, 0]
+    ]
+  tello2:
+    num_antennas: 1
+    names: [
+      "A"
+    ]
+    positions: [
+      [0.5, 0.5, 0]
+    ]
 
 uwb_ranges:
   # ground truth could be all to measure the distance between all the robots antennas or the robot that is supposed to be the ground truth
   ground_truth: "T01"
   type_measurement: "all"
-  localization_method: "none"
-  write_to_file: true
+  localization_method: "trilat"
+  write_to_file: false
   max_twr_freq: 100
   duty_cycle: 1
   mean: 0.0
   std_dev: 0.01
   ranges: [
-    "T02", # "tello1", "T03", "tello2"
+    "T02", "tello1", "tello2"
   ]
 demo_trajectory: False

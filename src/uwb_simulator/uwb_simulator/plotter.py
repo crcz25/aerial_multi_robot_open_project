@@ -261,6 +261,8 @@ class Plotter(Node):
                 measurements_table = self.data_df.to_numpy()[:, :n_ranges]
                 measurements_cols = self.data_df.columns.to_list()[:n_ranges]
 
+                self.get_logger().info("Estimating positions using TRILAT")
+
                 estimated_positions = mlt_tri_from_measurements_table(
                     measurements_table=measurements_table,
                     measurements_cols_names=measurements_cols,
@@ -269,6 +271,23 @@ class Plotter(Node):
                     all_antennas=self.antennas_names.value,
                     range_suffix=''
                 )
+
+                estimated_positions_arr = np.array(estimated_positions[0])
+
+                all_antennas = self.antennas_names.value
+                for antenna_idx, antenna in enumerate(all_antennas):
+                    x_antenna_est_pos = (
+                        estimated_positions_arr[:, antenna_idx, 0].mean()
+                    )
+                    y_antenna_est_pos = (
+                        estimated_positions_arr[:, antenna_idx, 1].mean()
+                    )
+                    self.get_logger().info(
+                        f'X estimated for antenna: {antenna} is '
+                        f'{x_antenna_est_pos}  -- Y estimated for antenna: '
+                        f'{antenna} is {y_antenna_est_pos}  --'
+                    )
+
 
         # Save the data in a csv file
         if self.write_to_file.value:
