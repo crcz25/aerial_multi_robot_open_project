@@ -127,9 +127,6 @@ def mlt_tri_from_measurements_table(
         )
         all_sided_positions_all_times.append(sided_positions_for_pair_comb)
 
-    print('>-------- All sided positions final --------<')
-    print(all_sided_positions_all_times)
-
     return all_sided_positions_all_times
 
 
