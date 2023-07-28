@@ -43,6 +43,7 @@ UWB Simulator
     - *"origin"*: the distances or ranges between all the antennas and the ground truth are computed (but not between the antennas that are not ground truth)
   - *localization_method*: Determines the method to compute the absolute or relative positions of the robot based on the ranges measured in the simulator. These estimated positions are saved in a external file.
     - *"lse"*: Uses a least squares error estimator to compute the absolute positions of the robots.
+      - **This method only works when using the ground truth or _origin_ type**
     - *"trilat"*: Uses trilateration to compute the relative positions of the robots.
       - **This method only works while using one antenna per robot.**
     - Any other string: Disables this option and no estimation is done.

@@ -175,6 +175,7 @@ class Plotter(Node):
         # print(self.data_df)
 
         # Create the variables to save the data in a csv file
+        self.estimates_df = None # DF to save the estimates
         self.now = time.time()
         if self.write_to_file.value:
             # self.get_logger().info(f"Creating csv file")
@@ -190,6 +191,15 @@ class Plotter(Node):
                         cols.append(f'GT_{antenna}')
                     else:
                         cols.append(f'{antenna}')
+                writer.writerow(cols)
+            
+            # Creating file to save the positions estimates
+            with open(f'pos_estimates_{self.now}.csv', 'w') as f:
+                writer = csv.writer(f)
+                cols = []
+                for antenna in self.antennas_names.value:
+                    cols.append(f'{antenna}')
+                self.estimates_df = pd.DataFrame(columns=cols)
                 writer.writerow(cols)
         
         # Create publisher for the range measurements
@@ -254,7 +264,10 @@ class Plotter(Node):
                     # Calculate the estimated position
                     estimated_position, err = lse(gt_pos, ranges_antenna)
                     # Print the estimated position
-                    # self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
+                    self.get_logger().info(f"Estimated position of {antenna}: {estimated_position}, error: {err}")
+                    if self.estimates_df is not None:
+                        self.estimates_df.loc[0, antenna] = estimated_position
+
             if self.localization_method.value == "trilat":
                 n_ranges = len(self.distances_to_subscribe.value)
 
@@ -288,6 +301,11 @@ class Plotter(Node):
                         f'{antenna} is {y_antenna_est_pos}  --'
                     )
 
+                    if self.estimates_df is not None:
+                        self.estimates_df.loc[0, antenna] = [
+                            x_antenna_est_pos, y_antenna_est_pos
+                        ]
+
 
         # Save the data in a csv file
         if self.write_to_file.value:
@@ -299,6 +317,15 @@ class Plotter(Node):
                     row = self.data_df.iloc[0].values.tolist()
                     # Write the row in the csv file
                     writer.writerow(row)
+            
+            with open(f'pos_estimates_{self.now}.csv', 'a') as f:
+                writer_est = csv.writer(f)
+                # Check if the dataframe is empty
+                if not self.estimates_df.empty:
+                    # Get row from the dataframe
+                    row = self.estimates_df.iloc[0].values.tolist()
+                    # Write the row in the csv file
+                    writer_est.writerow(row)
         pass
 
 def main(args=None):

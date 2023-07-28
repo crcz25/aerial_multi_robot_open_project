@@ -65,7 +65,7 @@ uwb_ranges:
   ground_truth: "T01"
   type_measurement: "all"
   localization_method: "trilat"
-  write_to_file: false
+  write_to_file: true
   max_twr_freq: 100
   duty_cycle: 1
   mean: 0.0
