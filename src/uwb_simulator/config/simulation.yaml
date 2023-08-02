@@ -13,6 +13,14 @@ robots:
   # - tello1
 
 uwb_nodes:
+  global_anchors: 
+    num_antennas: 3
+    names: [
+      "A", "B", "C", "D"
+    ]
+    positions: [
+      [-4.0, 4.0, 0.0], [4.0, 4.0, 0.0], [4.0, -4.0, 0.0], [-4.0, -4.0, 0.0]
+    ]
   T01:
     num_antennas: 3
     names: [
@@ -37,14 +45,14 @@ uwb_nodes:
 
 uwb_ranges:
   # ground truth could be all to measure the distance between all the robots antennas or the robot that is supposed to be the ground truth
-  ground_truth: "T01"
+  ground_truth: "global_anchors"
   type_measurement: "origin"
   localization_method: "lse"
-  write_to_file: false
+  write_to_file: True
   max_twr_freq: 400
   duty_cycle: 1
   mean: 0.0
-  std_dev: 0.2
+  std_dev: 0.1
   ranges: [
     "T02", "tello1",
   ]

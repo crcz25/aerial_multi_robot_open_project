@@ -128,6 +128,27 @@ def generate_launch_description():
         topics_global_positions.append(f'/{robot_name}_antennas')
     print(f"Topics names: {topics_global_positions}")
 
+    # Check if there is a global_anchors which means that the antennas should be added to the world frame
+    if 'global_anchors' in uwb_nodes_in_config:
+        print(f"Global anchors found: {uwb_nodes_in_config['global_anchors']}")
+        # Get the global anchors
+        global_anchors = uwb_nodes_in_config['global_anchors']
+        print(antennas_positions)
+        # Add broadcaster that generates the positions of the global antennas
+        anchor_broadcaster = Node(
+            package='uwb_simulator',
+            executable='anchor_tf2_broadcaster',
+            output='screen',
+            emulate_tty=True,
+            parameters=[{
+                'robot_name': 'global_anchors',
+                'num_antennas': int(global_anchors['num_antennas']),
+                'names_antennas': global_anchors['names'],
+                'positions_antennas': str(antennas_positions['global_anchors'])
+            }],
+        )
+        launch_description.add_action(anchor_broadcaster)
+
     # Iterate over the robots
     for num, robot_conf in enumerate(zip(robots_names_conf, *robots_pos_conf)):
         robot = robot_conf[0]
