@@ -106,6 +106,9 @@ class AnchorTfBroadcaster(Node):
         # Add the antennas to the tf broadcaster
         self.create_timer(0.1, self.generate_antennas)
 
+        # Publisher of the antenna transforms
+        self.publisher = self.create_publisher(geometry_msgs.msg.TransformStamped, f'/{self.robot_name}_antennas', qos_profile=qos_policy)
+
     def generate_antennas(self):
         # Iterate over the antennas
         for i, (name, antenna_x, antenna_y, antenna_z) in enumerate(
@@ -135,6 +138,8 @@ class AnchorTfBroadcaster(Node):
             self.transformation = t
             # Send the transformation
             self.tf_broadcaster.sendTransform(t)
+            # Publish the transformation
+            self.publisher.publish(t)
         return
 
 

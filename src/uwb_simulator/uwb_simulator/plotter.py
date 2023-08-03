@@ -112,6 +112,13 @@ class Plotter(Node):
         self.measurements_list = ast.literal_eval(self.measurements.value)
         # self.get_logger().info(f"measurements converted: {self.measurements_list}")
 
+        # Verify if the ground truth is global_anchors
+        if self.ground_truth.value == 'global_anchors':
+            self.filtered_antennas = [antenna for antenna in self.antennas_names.value if 'anchor' not in antenna]
+            self.measurements_cols = [antenna for antenna in self.distances_to_subscribe.value if 'anchor' not in antenna]
+        else :
+            self.filtered_antennas = self.antennas_names.value
+            self.measurements_cols = self.distances_to_subscribe.value
 
         # Generate the list of subscribers for the UWB distances
         self.subscribers_distances = []
@@ -271,24 +278,24 @@ class Plotter(Node):
             if self.localization_method.value == "trilat":
                 n_ranges = len(self.distances_to_subscribe.value)
 
-                measurements_table = self.data_df.to_numpy()[:, :n_ranges]
-                measurements_cols = self.data_df.columns.to_list()[:n_ranges]
+                # measurements_table = self.data_df.to_numpy()[:, :n_ranges]
+                # measurements_cols = self.data_df.columns.to_list()[:n_ranges]
 
                 self.get_logger().info("Estimating positions using TRILAT")
 
                 estimated_positions = mlt_tri_from_measurements_table(
-                    measurements_table=measurements_table,
-                    measurements_cols_names=measurements_cols,
-                    origin_antenna_1=self.antennas_names.value[0],
-                    origin_antenna_2=self.antennas_names.value[1],
-                    all_antennas=self.antennas_names.value,
+                    measurements_table=self.data_df[self.measurements_cols].to_numpy()[:, :n_ranges],
+                    measurements_cols_names=self.measurements_cols,
+                    origin_antenna_1=self.filtered_antennas[0],
+                    origin_antenna_2=self.filtered_antennas[1],
+                    all_antennas=self.filtered_antennas,
                     range_suffix=''
                 )
 
                 estimated_positions_arr = np.array(estimated_positions[0])
 
-                all_antennas = self.antennas_names.value
-                for antenna_idx, antenna in enumerate(all_antennas):
+                # all_antennas = self.antennas_names.value
+                for antenna_idx, antenna in enumerate(self.filtered_antennas):
                     x_antenna_est_pos = (
                         estimated_positions_arr[:, antenna_idx, 0].mean()
                     )

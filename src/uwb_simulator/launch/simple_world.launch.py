@@ -126,6 +126,9 @@ def generate_launch_description():
     for robot_name in robots_names_conf:
         # Append the subscriber to the list
         topics_global_positions.append(f'/{robot_name}_antennas')
+    # If there are global anchors, add them to the list
+    if 'global_anchors' in uwb_nodes_in_config:
+        topics_global_positions.append(f'/global_anchors_antennas')
     print(f"Topics names: {topics_global_positions}")
 
     # Check if there is a global_anchors which means that the antennas should be added to the world frame
