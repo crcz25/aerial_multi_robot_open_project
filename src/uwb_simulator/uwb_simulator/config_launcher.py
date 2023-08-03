@@ -125,6 +125,13 @@ class ConfigLaunch:
                             f'Not all antennas for robot {node} have positions'
                         )
 
+                    # Check if there are less antennas than positions
+                    if len(robot_antennas_names) < len(antennas_positions):
+                        raise ValueError(
+                            f'Not all positions for robot {node} '
+                            'have antennas names (missing names)'
+                        )
+
                     # If they exist, then go through each list of positions
                     # for each antenna, and store it in the corresponding place
                     # for the coordinates lists.
