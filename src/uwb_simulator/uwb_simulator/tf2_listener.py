@@ -30,49 +30,51 @@ def quaternion_from_euler(ai, aj, ak):
     sj = math.sin(aj)
     ck = math.cos(ak)
     sk = math.sin(ak)
-    cc = ci*ck
-    cs = ci*sk
-    sc = si*ck
-    ss = si*sk
+    cc = ci * ck
+    cs = ci * sk
+    sc = si * ck
+    ss = si * sk
 
-    q = np.empty((4, ))
-    q[0] = cj*sc - sj*cs
-    q[1] = cj*ss + sj*cc
-    q[2] = cj*cs - sj*sc
-    q[3] = cj*cc + sj*ss
+    q = np.empty((4,))
+    q[0] = cj * sc - sj * cs
+    q[1] = cj * ss + sj * cc
+    q[2] = cj * cs - sj * sc
+    q[3] = cj * cc + sj * ss
 
     return q
 
 
 class FrameListener(Node):
     def __init__(self):
-        super().__init__(f'tf2_listener_{randint(0, 1000)}')
-        qos_policy = rclpy.qos.QoSProfile(reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
-                                          history=rclpy.qos.HistoryPolicy.KEEP_LAST,
-                                          depth=1)
+        super().__init__(f"tf2_listener_{randint(0, 1000)}")
+        qos_policy = rclpy.qos.QoSProfile(
+            reliability=rclpy.qos.ReliabilityPolicy.BEST_EFFORT,
+            history=rclpy.qos.HistoryPolicy.KEEP_LAST,
+            depth=1,
+        )
 
         # Declare the parameters
-        self.declare_parameter('nodes_config', rclpy.Parameter.Type.STRING)
-        self.declare_parameter('ground_truth', rclpy.Parameter.Type.STRING)
-        self.declare_parameter('max_freq', rclpy.Parameter.Type.INTEGER)
-        self.declare_parameter('duty_cycle', rclpy.Parameter.Type.INTEGER)
-        self.declare_parameter('mean', rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter('std_dev', rclpy.Parameter.Type.DOUBLE)
-        self.declare_parameter('pairs_to_measure', rclpy.Parameter.Type.STRING_ARRAY)
-        self.declare_parameter('antennas', rclpy.Parameter.Type.STRING_ARRAY)
-        self.declare_parameter('measurements', rclpy.Parameter.Type.STRING)
-        self.declare_parameter('topics_to_publish', rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter("nodes_config", rclpy.Parameter.Type.STRING)
+        self.declare_parameter("ground_truth", rclpy.Parameter.Type.STRING)
+        self.declare_parameter("max_freq", rclpy.Parameter.Type.INTEGER)
+        self.declare_parameter("duty_cycle", rclpy.Parameter.Type.INTEGER)
+        self.declare_parameter("mean", rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter("std_dev", rclpy.Parameter.Type.DOUBLE)
+        self.declare_parameter("pairs_to_measure", rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter("antennas", rclpy.Parameter.Type.STRING_ARRAY)
+        self.declare_parameter("measurements", rclpy.Parameter.Type.STRING)
+        self.declare_parameter("topics_to_publish", rclpy.Parameter.Type.STRING_ARRAY)
         # Get the parameters
-        self.nodes_config = self.get_parameter_or('nodes_config', None)
-        self.ground_truth = self.get_parameter_or('ground_truth', None)
-        self.max_freq = self.get_parameter_or('max_freq', None)
-        self.duty_cycle = self.get_parameter_or('duty_cycle', None)
-        self.mean_noise = self.get_parameter_or('mean', None)
-        self.std_dev_noise = self.get_parameter_or('std_dev', None)
-        self.pairs = self.get_parameter_or('pairs_to_measure', None)
-        self.antennas_names = self.get_parameter_or('antennas', None)
-        self.measurements = self.get_parameter_or('measurements', None)
-        self.topics_to_publish = self.get_parameter_or('topics_to_publish', None)
+        self.nodes_config = self.get_parameter_or("nodes_config", None)
+        self.ground_truth = self.get_parameter_or("ground_truth", None)
+        self.max_freq = self.get_parameter_or("max_freq", None)
+        self.duty_cycle = self.get_parameter_or("duty_cycle", None)
+        self.mean_noise = self.get_parameter_or("mean", None)
+        self.std_dev_noise = self.get_parameter_or("std_dev", None)
+        self.pairs = self.get_parameter_or("pairs_to_measure", None)
+        self.antennas_names = self.get_parameter_or("antennas", None)
+        self.measurements = self.get_parameter_or("measurements", None)
+        self.topics_to_publish = self.get_parameter_or("topics_to_publish", None)
         # Print the parameters
         # self.get_logger().info(f"nodes_config: {self.nodes_config.value}")
         # self.get_logger().info(f"robot_name: {self.ground_truth.value}")
@@ -125,11 +127,8 @@ class FrameListener(Node):
         self.publishers_ = self.generate_publishers_names()
 
         # Call on_timer function
-        # TODO verify if we have to use the variable max_freq or duty_cycle
         self.timer = self.create_timer(1.0 / self.max_freq.value, self.on_timer)
         self.i = 0
-
-        # TODO: Add the subscription to the ranges topic
 
     def generate_publishers_names(self):
         publishers = {}
@@ -140,7 +139,7 @@ class FrameListener(Node):
     def on_timer(self):
         # Iterate over the pairs of nodes to calculate the transforms
         self.i += 1
-        if self.i == self.max_freq:
+        if self.i == len(self.measurements_list):
             self.i = 0
         # Get the index of the pair to calculate
         idx = self.i % len(self.measurements_list)
@@ -150,7 +149,9 @@ class FrameListener(Node):
         # print(f'To: {to_frame_rel}, From: {from_frame_rel}')
         # Get the transform between the origin and the end
         try:
-            t = self.tf_buffer.lookup_transform(to_frame_rel, from_frame_rel, rclpy.time.Time())
+            t = self.tf_buffer.lookup_transform(
+                to_frame_rel, from_frame_rel, rclpy.time.Time()
+            )
             # calculate the norm of the vector
             t_x = t.transform.translation.x
             t_y = t.transform.translation.y
@@ -162,8 +163,8 @@ class FrameListener(Node):
             # Add noise to the norm
             norm += np.random.normal(self.mean_noise.value, self.std_dev_noise.value)
             # Publish the norm
-            publisher_ = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][0]
-            msg = self.publishers_[f'from_{to_frame_rel}_to_{from_frame_rel}'][1]
+            publisher_ = self.publishers_[f"from_{to_frame_rel}_to_{from_frame_rel}"][0]
+            msg = self.publishers_[f"from_{to_frame_rel}_to_{from_frame_rel}"][1]
             msg.data = norm
             publisher_.publish(msg)
             # Print the information
@@ -191,5 +192,5 @@ def main(args=None):
     rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
