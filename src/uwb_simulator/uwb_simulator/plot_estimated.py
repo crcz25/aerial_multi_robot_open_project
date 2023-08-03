@@ -42,6 +42,10 @@ def main():
         pox_y = [p[1] for p in pos]
         # Plot the real position
         sns.scatterplot(x=pos_x, y=pox_y, ax=ax, label=antenna, marker='o', color='black')
+        # Add text of the point to the plot
+        for i, txt in enumerate(antenna):
+            ax.annotate(txt, (pos_x[i], pox_y[i]))
+            
         # break
     plt.show()
 
