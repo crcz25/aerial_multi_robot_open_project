@@ -166,6 +166,7 @@ cython_debug/
 # Ignore csv files
 *.csv
 *.npz
+*.npy
 
 # Ignore vscode files
 .vscode/
