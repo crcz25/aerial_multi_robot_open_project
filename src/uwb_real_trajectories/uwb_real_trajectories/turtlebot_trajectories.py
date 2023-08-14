@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /home/henascen/.cache/pypoetry/virtualenvs/ar-mrs-RV7DiSQi-py3.8/bin/python
 import argparse
 import cv2 as cv
 import numpy as np
@@ -13,8 +13,20 @@ from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 from tf_transformations import euler_from_quaternion
 
+import time
+
 
 class TurtleBot(Node):
+
+    ODOM_DATA_RECORD_PATH = (
+        'src/uwb_real_trajectories/test_data/20230814'
+        f'/odom_as_feedback/trajectory_odom_{time.time()}'
+    )
+    OPTI_DATA_RECORD_PATH = (
+        'src/uwb_real_trajectories/test_data/20230814'
+        f'/odom_as_feedback/trajectory_opti_{time.time()}'
+    )
+
     def __init__(self):
         # Generate a node with a random name number
         super().__init__(f"TBOT_trajectory_{randint(0, 1000)}")
@@ -22,10 +34,12 @@ class TurtleBot(Node):
         self.declare_parameter("n_loop", rclpy.Parameter.Type.INTEGER)
         self.declare_parameter("trajectory", rclpy.Parameter.Type.STRING)
         self.declare_parameter("sim", rclpy.Parameter.Type.BOOL)
+        self.declare_parameter("domain_bridge", rclpy.Parameter.Type.BOOL)
         # Get the parameters
         self.n_loop = self.get_parameter_or("n_loop", None)
         self.trajectory = self.get_parameter_or("trajectory", None)
         self.sim = self.get_parameter_or("sim", None)
+        self.domain_bridge = self.get_parameter_or("domain_bridge", False)
 
         if self.n_loop:
             self.n_loop = self.n_loop.value
@@ -42,18 +56,45 @@ class TurtleBot(Node):
             depth=1,
         )
         # Create topics
-        self.odom_sub = self.create_subscription(
-            Odometry, "/odom", self.odom_callback, qos_profile=qos_policy
-        )
+        if self.domain_bridge:
+            self.odom_sub = self.create_subscription(
+                Odometry,
+                "/T02/odom",
+                self.odom_callback,
+                qos_profile=qos_policy
+            )
+            self.publisher_twist = self.create_publisher(
+                Twist,
+                "/T02/cmd_vel",
+                1
+            )
+            self.mocap_sub = self.create_subscription(
+                PoseStamped,
+                "/vrpn_client_node/turtlebotH01/pose",
+                self.mocap_callback,
+                qos_profile=qos_policy,
+            )
+
+            self.ODOM_DATA_RECORD_PATH += '__T02'
+        else:
+            self.odom_sub = self.create_subscription(
+                Odometry, "/odom", self.odom_callback, qos_profile=qos_policy
+            )
+            # Create Twist publisher
+            self.publisher_twist = self.create_publisher(Twist, "/cmd_vel", 1)
+            self.mocap_sub = self.create_subscription(
+                PoseStamped,
+                "/vrpn_client_node/turtlebotH06/pose",
+                self.mocap_callback,
+                qos_profile=qos_policy,
+            )
+
+            self.ODOM_DATA_RECORD_PATH += '__T06'
+
         self.uwb_sub = self.create_subscription(
             PoseStamped, "/uwb_tag_0719", self.uwb_callback, qos_profile=qos_policy
         )
-        self.mocap_sub = self.create_subscription(
-            PoseStamped,
-            "/vrpn_client_node/turtle05/pose",
-            self.mocap_callback,
-            qos_profile=qos_policy,
-        )
+
         # Internal variables
         self.scan = LaserScan()
         self.scan_points = np.array([])
@@ -74,11 +115,10 @@ class TurtleBot(Node):
         self.resolution = 0.08
         self.theta = 0.0
 
-        # Create Twist publisher
-        self.publisher_twist = self.create_publisher(Twist, "/cmd_vel", 1)
+        # Velocity message
         self.twist = Twist()
 
-        self.create_timer(0.5, self.main_node)
+        self.create_timer(0.1, self.main_node)
         self.idx = 0
 
         if self.trajectory.value == "square":
@@ -133,14 +173,37 @@ class TurtleBot(Node):
                 [1.4815325108927064, -0.23465169756034668],
                 [1.5, 0.0],
             ]
+        
+        self.init_odom_pose = np.array([])
+
+        self.odom_curr_pose = np.array([])
+        self.opti_curr_pose = np.array([])
+
+        self.odom_all_locs = []
+        self.opti_all_locs = []
 
     def odom_callback(self, msg):
         self.odometry = msg
         orientation = msg.pose.pose.orientation
-        if self.sim.value:
-            _, _, self.theta = euler_from_quaternion(
-                [orientation.x, orientation.y, orientation.z, orientation.w]
+        # if self.sim.value:
+        _, _, self.theta = euler_from_quaternion(
+            [orientation.x, orientation.y, orientation.z, orientation.w]
+        )
+        
+        if not self.init_odom_pose.size > 0:
+            self.init_odom_pose = np.array(
+                [
+                    self.odometry.pose.pose.position.x,
+                    self.odometry.pose.pose.position.y
+                ]
             )
+        
+        self.odom_curr_pose = np.array(
+            [
+                self.odometry.pose.pose.position.x,
+                self.odometry.pose.pose.position.y
+            ]
+        )
 
     def uwb_callback(self, msg):
         self.uwb = msg
@@ -148,10 +211,16 @@ class TurtleBot(Node):
     def mocap_callback(self, msg):
         self.mocap = msg
         orientation = msg.pose.orientation
-        if not self.sim.value:
-            _, _, self.theta = euler_from_quaternion(
-                [orientation.x, orientation.y, orientation.z, orientation.w]
-            )
+        # if not self.sim.value:
+        #     _, _, self.theta = euler_from_quaternion(
+        #         [orientation.x, orientation.y, orientation.z, orientation.w]
+        #     )
+        self.opti_curr_pose = np.array(
+            [
+                self.mocap.pose.pose.position.x,
+                self.mocap.pose.pose.position.y
+            ]
+        )
 
     def rotate(self, step):
         # self.get_logger().info(f"Rotating at {step} steps")
@@ -177,82 +246,100 @@ class TurtleBot(Node):
         curr_pos = np.array(
             [self.odometry.pose.pose.position.x, self.odometry.pose.pose.position.y]
         )
-        # Compute the vector between the current position and the waypoint
-        # Calculate the vector
-        pos_vector = waypoint - curr_pos
-        # Calculate the distance to the waypoint
-        dist_goal = np.linalg.norm(pos_vector)
-        # Calculate the unit vector
-        u_vector = pos_vector / dist_goal
-        # Calculate the angle between the current position and the waypoint
-        angle = np.arctan2(u_vector[1], u_vector[0])
-        # Calculate the angle error
-        angle_error = angle - self.theta
-        angle_steps = 1.0
+        # Substract the initial odom position to the current position
+        # to start from a 0.0, 0.0 position
+        if self.init_odom_pose.size > 0:
+            curr_pos = np.abs(curr_pos - self.init_odom_pose)
+            # Compute the vector between the current position and the waypoint
+            # Calculate the vector
+            pos_vector = waypoint - curr_pos
+            # Calculate the distance to the waypoint
+            dist_goal = np.linalg.norm(pos_vector)
+            # Calculate the unit vector
+            u_vector = pos_vector / dist_goal
+            # Calculate the angle between the current position and the waypoint
+            angle = np.arctan2(u_vector[1], u_vector[0])
+            # Calculate the angle error
+            angle_error = angle - self.theta
+            angle_steps = 1.0
 
-        self.get_logger().info(f"Rotate goal")
-        self.get_logger().info(f"Current position: {curr_pos}")
-        self.get_logger().info(f"Goal position: {waypoint}")
-        self.get_logger().info(f"Distance to goal: {dist_goal}")
-        self.get_logger().info(f"Unit vector: {u_vector}")
-        self.get_logger().info(f"Angle: {angle}")
-        self.get_logger().info(f"Angle error: {angle_error}")
+            self.get_logger().info(f"Rotate goal")
+            self.get_logger().info(f"Current position: {curr_pos}")
+            self.get_logger().info(f"Goal position: {waypoint}")
+            self.get_logger().info(f"Distance to goal: {dist_goal}")
+            self.get_logger().info(f"Unit vector: {u_vector}")
+            self.get_logger().info(f"Angle: {angle}")
+            self.get_logger().info(f"Angle error: {angle_error}")
 
-        # Check in which direction to rotate
-        # if angle_error > 0:
-        #     angle_steps = -1.0
-        # else:
-        #     angle_steps = 1.0
+            # Check in which direction to rotate
+            # if angle_error > 0:
+            #     angle_steps = -1.0
+            # else:
+            #     angle_steps = 1.0
 
-        if np.abs(angle_error) > 0.05:
-            self.get_logger().info(f"Rotating")
-            self.twist.angular.z = 0.1  # * angle_steps
-            self.publisher_twist.publish(self.twist)
-        else:
-            self.stop()
-            self.centered = True
+            if np.abs(angle_error) > 0.02:
+                self.get_logger().info(f"Rotating")
+                self.twist.angular.z = 0.15  # * angle_steps
+                self.publisher_twist.publish(self.twist)
+            else:
+                self.stop()
+                self.centered = True
         return
 
     def move(self, waypoint):
+        self.get_logger().info(f"Moving")
         # Get the current position
         curr_pos = np.array(
             [self.odometry.pose.pose.position.x, self.odometry.pose.pose.position.y]
         )
-        # Compute the vector between the current position and the waypoint
-        # Calculate the vector
-        pos_vector = waypoint - curr_pos
-        # Calculate the distance to the waypoint
-        dist_goal = np.linalg.norm(pos_vector)
-        # Calculate the unit vector
-        u_vector = pos_vector / dist_goal
+        # Substract the initial odom position to the current position
+        # to start from a 0.0, 0.0 position
+        if self.init_odom_pose.size > 0:
+            curr_pos = np.abs(curr_pos - self.init_odom_pose)
+            # Compute the vector between the current position and the waypoint
+            # Calculate the vector
+            pos_vector = waypoint - curr_pos
+            # Calculate the distance to the waypoint
+            dist_goal = np.linalg.norm(pos_vector)
+            # Calculate the unit vector
+            u_vector = pos_vector / dist_goal
 
-        self.get_logger().info(f"Moving")
-        self.get_logger().info(f"Current position: {curr_pos}")
-        self.get_logger().info(f"Goal position: {waypoint}")
-        self.get_logger().info(f"Distance to goal: {dist_goal}")
-        self.get_logger().info(f"Unit vector: {u_vector}")
+            self.get_logger().info(f"Initial odom position: {self.init_odom_pose}")
+            self.get_logger().info(f"Current position: {curr_pos}")
+            self.get_logger().info(f"Goal position: {waypoint}")
+            self.get_logger().info(f"Distance to goal: {dist_goal}")
+            self.get_logger().info(f"Unit vector: {u_vector}")
 
-        if dist_goal > 0.1:
-            self.twist.linear.x = 0.2
-            # self.twist.linear.y = u_vector[1] * 0.1
-            self.twist.angular.z = 0.0
-            self.publisher_twist.publish(self.twist)
-        else:
-            self.stop()
-            self.reached_goal = True
+            if dist_goal > 0.1:
+                self.twist.linear.x = np.linalg.norm(u_vector) * 0.15
+                # self.twist.linear.y = u_vector[1] * 0.1
+                self.twist.angular.z = 0.0
+                self.publisher_twist.publish(self.twist)
+            else:
+                self.get_logger().info(f"Stopping the robot")
+                self.stop()
+                self.reached_goal = True
         return
+    
+    def save_location_data_numpy(self):
+        self.odom_all_locs.append(self.odom_curr_pose)
+        self.opti_all_locs.append(self.opti_all_locs)
 
     def main_node(self):
         # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
         if self.n_loop > 0:
             # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
             # Check if the goal has been reached
+            self.get_logger().info(
+                f"Current waypoint: {self.waypoints[self.idx]}"
+            )
             if not self.reached_goal:
                 if not self.centered:
                     self.rotate_goal(self.waypoints[self.idx])
                 else:
                     self.move(self.waypoints[self.idx])
             else:
+                self.get_logger().info(f"Goal reached")
                 self.idx += 1
                 self.reached_goal = False
                 self.centered = False
@@ -266,18 +353,30 @@ class TurtleBot(Node):
             self.stop()
             self.completed = True
             self.get_logger().info(f"Trajectory completed")
+        
+        self.get_logger().info(f"Saving location data")
+        self.save_location_data_numpy()
 
 
 def main(args=None):
     rclpy.init(args=args)
     cam_node = TurtleBot()
     try:
+        time.sleep(10)
         cam_node.get_logger().info("Starting node")
         rclpy.spin(cam_node)
     except KeyboardInterrupt:
         cam_node.stop()
         pass
     finally:
+        cam_node.get_logger().info("Writing saved data from odom and opti")
+        odom_opti_data = np.column_stack(
+            (cam_node.odom_all_locs, cam_node.opti_all_locs)
+        )
+        np.save(
+            cam_node.ODOM_DATA_RECORD_PATH,
+            odom_opti_data
+        )
         cam_node.get_logger().info("Shutting down")
         cam_node.destroy_node()
         rclpy.shutdown()
