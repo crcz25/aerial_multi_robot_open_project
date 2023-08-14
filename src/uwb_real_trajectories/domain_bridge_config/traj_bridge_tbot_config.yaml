@@ -1,0 +1,15 @@
+# Name of the domain bridge, used for node naming and logging
+name: tbot_bridge
+topics:
+  # Bridge "/odom" topic from doman ID 22 to domain ID 26
+  odom:
+    type: nav_msgs/msg/Odometry
+    remap: /T02/odom
+    from_domain: 22
+    to_domain: 26
+  
+  T02/cmd_vel:
+    type: geometry_msgs/msg/Twist
+    from_domain: 26
+    to_domain: 22
+    remap: /cmd_vel
