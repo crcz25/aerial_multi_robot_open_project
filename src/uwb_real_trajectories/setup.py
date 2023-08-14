@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'tbot_trajectories = uwb_real_trajectories.turtlebot_trajectories:main',
+            'tello_trajectories = uwb_real_trajectories.tello_trajectories:main',
         ],
     },
 )
