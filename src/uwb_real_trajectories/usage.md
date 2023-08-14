@@ -2,6 +2,7 @@ To execute the trajectories you need to issue the following command in a termina
 
 ```bash
 ros2 run uwb_real_trajectories tbot_trajectories --ros-args -p n_loop:=num_loops -p trajectory:=type_trajectory -p sim:=bool
+ros2 run uwb_real_trajectories tello_trajectories --ros-args -p n_loop:=num_loops -p trajectory:=type_trajectory -p sim:=bool
 ```
 
 where:
