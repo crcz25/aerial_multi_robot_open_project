@@ -171,5 +171,6 @@ cython_debug/
 # Ignore vscode files
 .vscode/
 
-# Ignore personal notes
+# Ignore personal notes and test data
 **/optitrack_usage.md
+**/test_data

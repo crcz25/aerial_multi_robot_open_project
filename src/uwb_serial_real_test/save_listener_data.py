@@ -2,7 +2,7 @@ import time
 import serial
 import numpy
 
-DWM_LISTENER_PORT = "/dev/ttyACM2"
+DWM_LISTENER_PORT = "/dev/ttyACM0"
 DWM_DATA_RECORD_PATH = (
     f'src/uwb_serial_real_test/serial_data_record/dwm_distance_{time.time()}'
 )
