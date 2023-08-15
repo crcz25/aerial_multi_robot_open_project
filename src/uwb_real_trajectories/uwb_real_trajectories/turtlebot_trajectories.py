@@ -76,6 +76,7 @@ class TurtleBot(Node):
             )
 
             self.ODOM_DATA_RECORD_PATH += '__T02'
+            self.OPTI_DATA_RECORD_PATH += '__T02'
         else:
             self.odom_sub = self.create_subscription(
                 Odometry, "/odom", self.odom_callback, qos_profile=qos_policy
@@ -90,6 +91,7 @@ class TurtleBot(Node):
             )
 
             self.ODOM_DATA_RECORD_PATH += '__T06'
+            self.OPTI_DATA_RECORD_PATH += '__T06'
 
         self.uwb_sub = self.create_subscription(
             PoseStamped, "/uwb_tag_0719", self.uwb_callback, qos_profile=qos_policy
@@ -322,8 +324,14 @@ class TurtleBot(Node):
         return
     
     def save_location_data_numpy(self):
-        self.odom_all_locs.append(self.odom_curr_pose)
-        self.opti_all_locs.append(self.opti_all_locs)
+        if self.odom_curr_pose.size > 0:
+            self.odom_all_locs.append(
+                (self.odom_curr_pose[0], self.odom_curr_pose[1])
+            )
+        if self.odom_curr_pose.size > 0:
+            self.opti_all_locs.append(
+                (self.opti_curr_pose[0], self.opti_curr_pose[1])
+            )
 
     def main_node(self):
         # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
