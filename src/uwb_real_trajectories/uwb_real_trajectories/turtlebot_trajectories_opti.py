@@ -20,11 +20,11 @@ class TurtleBot(Node):
 
     ODOM_DATA_RECORD_PATH = (
         'src/uwb_real_trajectories/test_data/20230814'
-        f'/odom_as_feedback/trajectory_odom_{time.time()}'
+        f'/opti_as_feedback/trajectory_odom_{time.time()}'
     )
     OPTI_DATA_RECORD_PATH = (
         'src/uwb_real_trajectories/test_data/20230814'
-        f'/odom_as_feedback/trajectory_opti_{time.time()}'
+        f'/opti_as_feedback/trajectory_opti_{time.time()}'
     )
 
     def __init__(self):
@@ -76,6 +76,7 @@ class TurtleBot(Node):
             )
 
             self.ODOM_DATA_RECORD_PATH += '__T02'
+            self.OPTI_DATA_RECORD_PATH += '__T02'
         else:
             self.odom_sub = self.create_subscription(
                 Odometry, "/odom", self.odom_callback, qos_profile=qos_policy
@@ -90,6 +91,7 @@ class TurtleBot(Node):
             )
 
             self.ODOM_DATA_RECORD_PATH += '__T06'
+            self.OPTI_DATA_RECORD_PATH += '__T06'
 
         self.uwb_sub = self.create_subscription(
             PoseStamped, "/uwb_tag_0719", self.uwb_callback, qos_profile=qos_policy
@@ -122,13 +124,13 @@ class TurtleBot(Node):
         self.idx = 0
 
         if self.trajectory.value == "square":
-            self.waypoints = [
+            self.waypoints = np.array([
                 # [0.0, 0.0],
-                [2.0, 0.0],
-                [2.0, 2.0],
                 [0.0, 2.0],
+                [-2.0, 2.0],
+                [-2.0, 0.0],
                 [0.0, 0.0],
-            ]
+            ])
         elif self.trajectory.value == "circle":
             self.waypoints = [
                 [1.5, 0.0],
@@ -198,6 +200,7 @@ class TurtleBot(Node):
                     self.odometry.pose.pose.position.y
                 ]
             )
+            # self.theta = self.theta + (3 * np.pi)
         
         self.odom_curr_pose = np.array(
             [
@@ -217,18 +220,19 @@ class TurtleBot(Node):
         #         [orientation.x, orientation.y, orientation.z, orientation.w]
         #     )
 
-        if not self.init_odom_pose.size > 0:
+        if not self.init_opti_pose.size > 0:
             self.init_opti_pose = np.array(
                 [
                     self.mocap.pose.position.x,
-                    self.mocap.pose.position.y
+                    self.mocap.pose.position.y,
                 ]
             )
+            self.waypoints = self.waypoints + self.init_opti_pose
 
         self.opti_curr_pose = np.array(
             [
                 self.mocap.pose.position.x,
-                self.mocap.pose.position.y
+                self.mocap.pose.position.y,
             ]
         )
 
@@ -256,10 +260,10 @@ class TurtleBot(Node):
         curr_pos = np.array(
             [self.mocap.pose.position.x, self.mocap.pose.position.y]
         )
-        # Substract the initial odom position to the current position
-        # to start from a 0.0, 0.0 position
-        if self.init_odom_pose.size > 0:
-            curr_pos = np.abs(curr_pos - self.init_opti_pose)
+        # Add the waypoint destination to the current position
+        # to reach the new goal (new waypoint)
+        if self.init_opti_pose.size > 0:
+            # curr_pos = np.abs(curr_pos - self.init_opti_pose)
             # Compute the vector between the current position and the waypoint
             # Calculate the vector
             pos_vector = waypoint - curr_pos
@@ -268,7 +272,7 @@ class TurtleBot(Node):
             # Calculate the unit vector
             u_vector = pos_vector / dist_goal
             # Calculate the angle between the current position and the waypoint
-            angle = np.arctan2(u_vector[1], u_vector[0])
+            angle = np.arctan2(u_vector[0], u_vector[1])
             # Calculate the angle error
             angle_error = angle - self.theta
             angle_steps = 1.0
@@ -289,7 +293,7 @@ class TurtleBot(Node):
 
             if np.abs(angle_error) > 0.02:
                 self.get_logger().info(f"Rotating")
-                self.twist.angular.z = 0.1  # * angle_steps
+                self.twist.angular.z = 0.05  # * angle_steps
                 self.publisher_twist.publish(self.twist)
             else:
                 self.stop()
@@ -304,8 +308,8 @@ class TurtleBot(Node):
         )
         # Substract the initial odom position to the current position
         # to start from a 0.0, 0.0 position
-        if self.init_odom_pose.size > 0:
-            curr_pos = np.abs(curr_pos - self.init_opti_pose)
+        if self.init_opti_pose.size > 0:
+            # curr_pos = np.abs(curr_pos - self.init_opti_pose)
             # Compute the vector between the current position and the waypoint
             # Calculate the vector
             pos_vector = waypoint - curr_pos
@@ -314,7 +318,7 @@ class TurtleBot(Node):
             # Calculate the unit vector
             u_vector = pos_vector / dist_goal
 
-            self.get_logger().info(f"Initial odom position: {self.init_odom_pose}")
+            self.get_logger().info(f"Initial opti position: {self.init_opti_pose}")
             self.get_logger().info(f"Current position: {curr_pos}")
             self.get_logger().info(f"Goal position: {waypoint}")
             self.get_logger().info(f"Distance to goal: {dist_goal}")
@@ -332,8 +336,14 @@ class TurtleBot(Node):
         return
     
     def save_location_data_numpy(self):
-        self.odom_all_locs.append(self.odom_curr_pose)
-        self.opti_all_locs.append(self.opti_all_locs)
+        if self.odom_curr_pose.size > 0:
+            self.odom_all_locs.append(
+                (self.odom_curr_pose[0], self.odom_curr_pose[1])
+            )
+        if self.odom_curr_pose.size > 0:
+            self.opti_all_locs.append(
+                (self.opti_curr_pose[0], self.opti_curr_pose[1])
+            )
 
     def main_node(self):
         # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
@@ -372,7 +382,7 @@ def main(args=None):
     rclpy.init(args=args)
     cam_node = TurtleBot()
     try:
-        time.sleep(10)
+        time.sleep(5)
         cam_node.get_logger().info("Starting node")
         rclpy.spin(cam_node)
     except KeyboardInterrupt:
