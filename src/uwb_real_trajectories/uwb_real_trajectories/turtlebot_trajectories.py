@@ -217,8 +217,8 @@ class TurtleBot(Node):
         #     )
         self.opti_curr_pose = np.array(
             [
-                self.mocap.pose.pose.position.x,
-                self.mocap.pose.pose.position.y
+                self.mocap.pose.position.x,
+                self.mocap.pose.position.y
             ]
         )
 
@@ -370,12 +370,15 @@ def main(args=None):
         pass
     finally:
         cam_node.get_logger().info("Writing saved data from odom and opti")
-        odom_opti_data = np.column_stack(
-            (cam_node.odom_all_locs, cam_node.opti_all_locs)
-        )
+        odom_all_locs_narray = np.array(cam_node.odom_all_locs)
+        opti_all_locs_narray = np.array(cam_node.opti_all_locs)
         np.save(
             cam_node.ODOM_DATA_RECORD_PATH,
-            odom_opti_data
+            odom_all_locs_narray
+        )
+        np.save(
+            cam_node.OPTI_DATA_RECORD_PATH,
+            opti_all_locs_narray
         )
         cam_node.get_logger().info("Shutting down")
         cam_node.destroy_node()
