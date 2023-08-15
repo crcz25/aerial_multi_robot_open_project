@@ -14,7 +14,7 @@ def generate_launch_description():
     # Rename the base_link frame
     turtlebot_one_traj = Node(
         package='uwb_real_trajectories',
-        executable='tbot_trajectories',
+        executable='tbot_trajectories_opti',
         output='screen',
         emulate_tty=True,
         parameters=[{
@@ -27,7 +27,7 @@ def generate_launch_description():
     # Rename the base_link frame
     turtlebot_two_traj = Node(
         package='uwb_real_trajectories',
-        executable='tbot_trajectories',
+        executable='tbot_trajectories_opti',
         output='screen',
         emulate_tty=True,
         parameters=[{
