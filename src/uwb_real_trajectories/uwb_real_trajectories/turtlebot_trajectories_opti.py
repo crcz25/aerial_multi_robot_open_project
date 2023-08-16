@@ -77,6 +77,18 @@ class TurtleBot(Node):
 
             self.ODOM_DATA_RECORD_PATH += '__T02'
             self.OPTI_DATA_RECORD_PATH += '__T02'
+
+            square_waypoints = np.array([
+                [0.0, -2.0],
+                [2.0, -2.0],
+                [2.0, 0.0],
+                [0.0, 0.0],
+            ])
+
+            # For T02 the odom axis is rotated -pi/2 compared to the optitrack
+            # axis.
+            self.ODOM_AXIS_ROT = -np.pi/2
+
         else:
             self.odom_sub = self.create_subscription(
                 Odometry, "/odom", self.odom_callback, qos_profile=qos_policy
@@ -92,6 +104,17 @@ class TurtleBot(Node):
 
             self.ODOM_DATA_RECORD_PATH += '__T06'
             self.OPTI_DATA_RECORD_PATH += '__T06'
+
+            square_waypoints = np.array([
+                [0.0, 2.0],
+                [-2.0, 2.0],
+                [-2.0, 0.0],
+                [0.0, 0.0],
+            ])
+
+            # For T06 the odom axis is rotated pi/2 compared to the optitrack
+            # axis.
+            self.ODOM_AXIS_ROT = np.pi/2
 
         self.uwb_sub = self.create_subscription(
             PoseStamped, "/uwb_tag_0719", self.uwb_callback, qos_profile=qos_policy
@@ -123,14 +146,16 @@ class TurtleBot(Node):
         self.create_timer(0.1, self.main_node)
         self.idx = 0
 
+        self.waypoints_mocap_ready = False
+
         if self.trajectory.value == "square":
-            self.waypoints = np.array([
-                # [0.0, 0.0],
-                [0.0, 2.0],
-                [-2.0, 2.0],
-                [-2.0, 0.0],
-                [0.0, 0.0],
-            ])
+            # self.waypoints = np.array([
+            #     [0.0, 2.0],
+            #     [-2.0, 2.0],
+            #     [-2.0, 0.0],
+            #     [0.0, 0.0],
+            # ])
+            self.waypoints = square_waypoints
         elif self.trajectory.value == "circle":
             self.waypoints = [
                 [1.5, 0.0],
@@ -200,7 +225,6 @@ class TurtleBot(Node):
                     self.odometry.pose.pose.position.y
                 ]
             )
-            # self.theta = self.theta + (3 * np.pi)
         
         self.odom_curr_pose = np.array(
             [
@@ -227,7 +251,8 @@ class TurtleBot(Node):
                     self.mocap.pose.position.y,
                 ]
             )
-            self.waypoints = self.waypoints + self.init_opti_pose
+            self.waypoints = self.init_opti_pose + self.waypoints
+            self.waypoints_mocap_ready = True
 
         self.opti_curr_pose = np.array(
             [
@@ -272,7 +297,9 @@ class TurtleBot(Node):
             # Calculate the unit vector
             u_vector = pos_vector / dist_goal
             # Calculate the angle between the current position and the waypoint
-            angle = np.arctan2(u_vector[0], u_vector[1])
+            angle = np.arctan2(u_vector[1], u_vector[0])
+            # Compensate that the odom orientation is already rotated
+            self.theta = self.theta + self.ODOM_AXIS_ROT
             # Calculate the angle error
             angle_error = angle - self.theta
             angle_steps = 1.0
@@ -347,7 +374,7 @@ class TurtleBot(Node):
 
     def main_node(self):
         # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
-        if self.n_loop > 0:
+        if self.n_loop > 0 and self.waypoints_mocap_ready == True:
             # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
             # Check if the goal has been reached
             self.get_logger().info(
@@ -369,6 +396,9 @@ class TurtleBot(Node):
                     self.idx = 0
                     self.get_logger().info(f"Trajectory completed")
                     self.get_logger().info(f"Number of loops remaining: {self.n_loop}")
+        elif self.waypoints_mocap_ready == False:
+            self.stop()
+            self.get_logger().info(f"Waiting for waypoints to be updated")
         else:
             self.stop()
             self.completed = True
