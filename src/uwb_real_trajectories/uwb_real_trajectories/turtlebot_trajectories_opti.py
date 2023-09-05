@@ -143,7 +143,7 @@ class TurtleBot(Node):
         # Velocity message
         self.twist = Twist()
 
-        self.create_timer(0.1, self.main_node)
+        self.create_timer(0.05, self.main_node)
         self.idx = 0
 
         self.waypoints_mocap_ready = False
@@ -292,14 +292,29 @@ class TurtleBot(Node):
             # Compute the vector between the current position and the waypoint
             # Calculate the vector
             pos_vector = waypoint - curr_pos
+
+            # Rotate the pos_vector to be aligned with the odom axis
+            if self.domain_bridge:
+                compensation_angle = np.pi/2
+            else:
+                compensation_angle = -np.pi/2
+            
+            c, s = np.cos(compensation_angle), np.sin(compensation_angle)
+            rot_mtx = np.matrix([[c, s], [-s, c]])
+            pos_vector_rot = np.dot(pos_vector, rot_mtx)
+            self.get_logger().info(f"Pos vector rot ---: {pos_vector_rot.shape}")
+            pos_vector_od = pos_vector_rot[0]
+            self.get_logger().info(f"Pos vector ---: {pos_vector_od}")
+            self.get_logger().info(f"Pos vector ---: {pos_vector_od.shape}")
+
             # Calculate the distance to the waypoint
-            dist_goal = np.linalg.norm(pos_vector)
+            dist_goal = np.linalg.norm(pos_vector_od)
             # Calculate the unit vector
-            u_vector = pos_vector / dist_goal
+            u_vector = pos_vector_od / dist_goal
             # Calculate the angle between the current position and the waypoint
             angle = np.arctan2(u_vector[1], u_vector[0])
-            # Compensate that the odom orientation is already rotated
-            self.theta = self.theta + self.ODOM_AXIS_ROT
+            # # Compensate that the odom orientation is already rotated
+            # new_theta = self.theta + self.ODOM_AXIS_ROT
             # Calculate the angle error
             angle_error = angle - self.theta
             angle_steps = 1.0
@@ -318,9 +333,9 @@ class TurtleBot(Node):
             # else:
             #     angle_steps = 1.0
 
-            if np.abs(angle_error) > 0.02:
+            if np.abs(angle_error) > 0.01:
                 self.get_logger().info(f"Rotating")
-                self.twist.angular.z = 0.05  # * angle_steps
+                self.twist.angular.z = 0.5 * np.abs(angle_error)
                 self.publisher_twist.publish(self.twist)
             else:
                 self.stop()
@@ -351,8 +366,8 @@ class TurtleBot(Node):
             self.get_logger().info(f"Distance to goal: {dist_goal}")
             self.get_logger().info(f"Unit vector: {u_vector}")
 
-            if dist_goal > 0.1:
-                self.twist.linear.x = np.linalg.norm(u_vector) * 0.15
+            if dist_goal > 0.2:
+                self.twist.linear.x = np.linalg.norm(u_vector) * 0.1
                 # self.twist.linear.y = u_vector[1] * 0.1
                 self.twist.angular.z = 0.0
                 self.publisher_twist.publish(self.twist)
@@ -378,7 +393,7 @@ class TurtleBot(Node):
             # Iterate the number of times specified in the parameter n_loop (number of times the trajectory is repeated)
             # Check if the goal has been reached
             self.get_logger().info(
-                f"Current waypoint: {self.waypoints[self.idx]}"
+                f"[MOCAP READY] Current waypoint: {self.waypoints[self.idx]}"
             )
             if not self.reached_goal:
                 if not self.centered:
