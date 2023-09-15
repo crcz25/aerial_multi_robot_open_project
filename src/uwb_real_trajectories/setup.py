@@ -26,6 +26,7 @@ setup(
             'tbot_trajectories = uwb_real_trajectories.turtlebot_trajectories:main',
             'tello_trajectories = uwb_real_trajectories.tello_trajectories:main',
             'tbot_trajectories_opti = uwb_real_trajectories.turtlebot_trajectories_opti:main',
+            'save_data = uwb_real_trajectories.save_data:main',
         ],
     },
 )
