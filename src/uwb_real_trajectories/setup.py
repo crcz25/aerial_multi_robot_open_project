@@ -1,4 +1,6 @@
 from setuptools import setup
+import os
+from glob import glob
 
 package_name = 'uwb_real_trajectories'
 
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('share', package_name), glob('launch/*.launch.py')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,6 +25,7 @@ setup(
         'console_scripts': [
             'tbot_trajectories = uwb_real_trajectories.turtlebot_trajectories:main',
             'tello_trajectories = uwb_real_trajectories.tello_trajectories:main',
+            'tbot_trajectories_opti = uwb_real_trajectories.turtlebot_trajectories_opti:main',
         ],
     },
 )
