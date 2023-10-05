@@ -17,7 +17,7 @@ from geometry_msgs.msg import PoseStamped, Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, Float32
 from tf_transformations import euler_from_quaternion
 
 from tello_msgs.srv import TelloAction
@@ -91,7 +91,7 @@ class SaveData(Node):
             # Get the topics from the config file
             uwb_nodes = config_dict.get("uwb_nodes", None)
             uwb_ranges = config_dict.get("uwb_ranges", None)
-            ground_truth = config_dict.get("ground_truth", None)
+            ground_truth = uwb_ranges.get("ground_truth", None)
             antennas_names = []
             for node, config in uwb_nodes.items():
                 for antenna in config["names"]:
@@ -129,52 +129,70 @@ class SaveData(Node):
             topics_distances = []
             for origin, end in measurements:
                 topics_distances.append(f"from_{origin}_to_{end}")
-            print(f"Topics names: {topics_distances}")
+            print(f"Distance topics names: {topics_distances}")
+            self.topics_distances = topics_distances
             # Generaet the names of the topics to publish or subscribe related to the global positions of the antennas
             topics_global_positions = []
             # Iterate over the robots in the system
             for node, config in uwb_nodes.items():
                 # Append the subscriber to the list
                 topics_global_positions.append(f"/{node}_antennas")
-            print(f"Topics names: {topics_global_positions}")
+            print(f"Global position topic names: {topics_global_positions}")
+            # Iterate to generate the odometry topics
+            topics_odom = []
+            for node, config in uwb_nodes.items():
+                # Append the subscriber to the list
+                topics_odom.append(f"/{node}/odom")
+            self.topics_odom = topics_odom
+            print(f"Odometry topics names: {topics_odom}")
+            self.topics_opti = []
 
             # TODO: Ver que topics usar para las funciones de callback
             # TODO: Crear la lista de topics odom
 
-        else:
-            # Load the odometry topics from the bag
-            self.subcribers_odom = []
-            for idx, topic in enumerate(self.topics_odom):
-                print(f"Topic: {topic}")
-                # Create the subscriber
-                odometry = self.create_subscription(
-                    Odometry, topic, self.read_odom(topic), qos_profile=self.qos_policy
-                )
-                # Append the subscriber to the list
-                self.subcribers_odom.append(odometry)
-            # Load the optitrack topics from the bag
-            self.subcribers_opti = []
-            for idx, topic in enumerate(self.topics_opti):
-                print(f"Topic: {topic}")
-                # Create the subscriber
-                optitrack = self.create_subscription(
-                    PoseStamped,
-                    topic,
-                    self.read_opti(topic),
-                    qos_profile=self.qos_policy,
-                )
-                # Append the subscriber to the list
-                self.subcribers_opti.append(optitrack)
-            # Declare the dictionary to save the data
-            self.data = {key: None for key in self.topics_odom + self.topics_opti}
-            # Create a pandas dataframe to save the data with the topics as columns
-            # Generate the combination of topics and the coordinates (x, y, z)
-            # self.cols = []
-            # for topic in self.topics_odom + self.topics_opti:
-            #     self.cols += [f"{topic}_x", f"{topic}_y", f"{topic}_z"]
-            # print(f"Columns: {self.cols}")
-            # Create the dataframe
-            self.data_df = pd.DataFrame(columns=self.topics_odom + self.topics_opti)
+        # Load the odometry topics from the bag
+        self.subcribers_odom = []
+        for idx, topic in enumerate(self.topics_odom):
+            print(f"Topic: {topic}")
+            # Create the subscriber
+            odometry = self.create_subscription(
+                Odometry, topic, self.read_odom(topic), qos_profile=self.qos_policy
+            )
+            # Append the subscriber to the list
+            self.subcribers_odom.append(odometry)
+        # Load the optitrack topics from the bag
+        self.subcribers_opti = []
+        for idx, topic in enumerate(self.topics_opti):
+            print(f"Topic: {topic}")
+            # Create the subscriber
+            optitrack = self.create_subscription(
+                PoseStamped,
+                topic,
+                self.read_opti(topic),
+                qos_profile=self.qos_policy,
+            )
+            # Append the subscriber to the list
+            self.subcribers_opti.append(optitrack)
+        # Load the distances topics from the bag or the simulation
+        self.subcribers_distances = []
+        for idx, topic in enumerate(self.topics_distances):
+            print(f"Topic: {topic}")
+            # Create the subscriber
+            distance = self.create_subscription(
+                Float32, topic, self.read_distance(topic), qos_profile=self.qos_policy
+            )
+            # Append the subscriber to the list
+            self.subcribers_distances.append(distance)
+        # Declare the dictionary to save the data
+        self.data = {key: None for key in self.topics_odom + self.topics_opti}
+        # Create a pandas dataframe to save the data with the topics as columns
+        # Generate the combination of topics and the coordinates (x, y, z)
+        # self.cols = []
+        # for topic in self.topics_odom + self.topics_opti:
+        #     self.cols += [f"{topic}_x", f"{topic}_y", f"{topic}_z"]
+        # print(f"Columns: {self.cols}")
+        # Create the dataframe
+        self.data_df = pd.DataFrame(columns=self.topics_odom + self.topics_opti + self.topics_distances)
 
         # Create the timer to process the data
         self.timer = self.create_timer(1.0, self.on_timer)
@@ -185,15 +203,15 @@ class SaveData(Node):
         )
         # Create the csv file
         with open(self.csv_file, "w") as file:
-            first_line = ",".join(self.topics_odom + self.topics_opti)
+            first_line = ",".join(self.topics_odom + self.topics_opti + self.topics_distances)
             file.write(f"{first_line}\n")
 
     # Callback function for the odometry
     def read_odom(self, topic):
         # Create the callback function
         def callback(msg):
-            print(f"Topic: {topic}")
-            print(msg.pose.pose.position)
+            # print(f"Topic: {topic}")
+            # print(msg.pose.pose.position)
             self.data[topic] = msg.pose.pose.position
             # append(msg.pose.pose.position)
             # Save the data to the dataframe on the corresponding column
@@ -225,6 +243,17 @@ class SaveData(Node):
 
         return callback
 
+    # Callback function for the distances
+    def read_distance(self, topic):
+        # Create the callback function
+        def callback(msg):
+            # print(f"Topic: {topic}")
+            # print(msg)
+            self.data[topic] = msg.data
+            self.data_df[topic] = [msg.data]
+
+        return callback
+
     def on_timer(self):
         # Add the data to the csv file
         with open(self.csv_file, "a") as f:
@@ -233,6 +262,7 @@ class SaveData(Node):
             if not self.data_df.empty:
                 # Get row from the dataframe
                 row = self.data_df.iloc[0].values.tolist()
+                print(f"Row: {row}")
                 # Write the row in the csv file
                 writer.writerow(row)
 
